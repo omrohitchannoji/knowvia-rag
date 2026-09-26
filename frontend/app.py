@@ -13,7 +13,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
+# Resolve API Base URL (Streamlit Secrets > Env Var > Static EC2 IP)
+def get_api_base_url():
+    if hasattr(st, "secrets") and "API_BASE_URL" in st.secrets:
+        return st.secrets["API_BASE_URL"]
+    return os.getenv("API_BASE_URL", "http://13.205.104.107:8000/api/v1")
+
+API_BASE_URL = get_api_base_url()
+
 HEALTH_TTL = 15
 DOCS_TTL = 10
 
