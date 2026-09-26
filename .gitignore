@@ -1,0 +1,28 @@
+# Environment & Credentials
+.env
+*.pem
+knowvia-ec2-key.pem
+
+# Python & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Vector DB Local Cache
+qdrant_data/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+
+# Temporary Scratch Files & Archives
+scratch/
+*.tar.gz
+*.zip
+app_bundle.tar.gz
+

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "eval_001",
+    "category": "technical_knowledge",
+    "query": "What is a Kubernetes Job and how does it execute?",
+    "expected_document": "doc_parallel_work_queue",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["Job", "pod", "completions", "exit code 0"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_002",
+    "category": "technical_knowledge",
+    "query": "What is the purpose of parallelism in a Kubernetes Job?",
+    "expected_document": "doc_parallel_work_queue",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["parallelism", "work queue", "concurrent", "pods"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_003",
+    "category": "technical_knowledge",
+    "query": "What is a Kubernetes CronJob and how is it scheduled?",
+    "expected_document": "doc_cronjobs",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["CronJob", "schedule", "cron syntax", "concurrencyPolicy"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_004",
+    "category": "technical_knowledge",
+    "query": "How does Kubernetes Horizontal Pod Autoscaler (HPA) work?",
+    "expected_document": "doc_pods_autoscale",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["HPA", "Horizontal Pod Autoscaler", "metrics", "target CPU"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_005",
+    "category": "technical_knowledge",
+    "query": "How do you monitor and debug failed Kubernetes Jobs?",
+    "expected_document": "doc_monitor_job",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["kubectl describe", "kubectl logs", "backoffLimit", "events"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_006",
+    "category": "technical_knowledge",
+    "query": "How are Databricks jobs created and managed?",
+    "expected_document": "doc_job_management",
+    "expected_intent": "knowledge",
+    "data_category": "true",
+    "expected_answer_keywords": ["Databricks", "jobs API", "cluster", "task"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_007",
+    "category": "conversational",
+    "query": "Who are you?",
+    "expected_document": null,
+    "expected_intent": "conversational",
+    "data_category": "none",
+    "expected_answer_keywords": ["Technical Documentation Intelligence Assistant"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_008",
+    "category": "conversational",
+    "query": "What can you do?",
+    "expected_document": null,
+    "expected_intent": "conversational",
+    "data_category": "none",
+    "expected_answer_keywords": ["Kubernetes", "CronJobs", "HPA", "Databricks"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_009",
+    "category": "out_of_scope",
+    "query": "What is the weather today in New York?",
+    "expected_document": null,
+    "expected_intent": "out_of_scope",
+    "data_category": "none",
+    "expected_answer_keywords": ["unable to answer", "specialized strictly"],
+    "access_required": "PUBLIC_USER"
+  },
+  {
+    "id": "eval_010",
+    "category": "distractor_robustness",
+    "query": "How does C++ exception unwinding work on Windows?",
+    "expected_document": "doc_2018_CppCon_Unwinding_the_Stack",
+    "expected_intent": "knowledge",
+    "data_category": "noisy",
+    "expected_answer_keywords": ["exception", "unwinding", "stack"],
+    "access_required": "PUBLIC_USER"
+  }
+]
