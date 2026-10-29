@@ -20,15 +20,15 @@ class QdrantVectorStore:
         self.vector_size = vector_size or settings.EMBEDDING_DIMENSION
 
         # Client Connection Setup
-        if url or settings.QDRANT_URL:
+        if location == ":memory:":
+            logger.info("Initializing in-memory Qdrant Vector DB for testing")
+            self.client = QdrantClient(location=":memory:")
+        elif url or settings.QDRANT_URL:
             logger.info(f"Connecting to Cloud Qdrant Vector DB at [{url or settings.QDRANT_URL}]")
             self.client = QdrantClient(
                 url=url or settings.QDRANT_URL,
                 api_key=api_key or settings.QDRANT_API_KEY
             )
-        elif location == ":memory:":
-            logger.info("Initializing in-memory Qdrant Vector DB for testing")
-            self.client = QdrantClient(location=":memory:")
         else:
             storage_path = path or settings.QDRANT_STORAGE_PATH
             logger.info(f"Initializing local persistent Qdrant Vector DB at [{storage_path}]")

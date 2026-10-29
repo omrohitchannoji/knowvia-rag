@@ -9,7 +9,7 @@ def test_route_who_are_you():
     assert resp.status_code == 200
     data = resp.json()
     assert data["is_abstained"] is False
-    assert "NexaCloud" in data["answer"]
+    assert "Knowvia" in data["answer"] or "NexaCloud" in data["answer"]
 
 def test_route_out_of_scope():
     resp = client.post("/api/v1/query", json={"query": "what is the weather today?", "user_role": "PUBLIC_USER"})

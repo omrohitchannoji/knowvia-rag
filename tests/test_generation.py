@@ -75,18 +75,30 @@ def test_generation_service_empty_candidates():
     assert response.retrieved_chunks_count == 0
     assert response.citations == []
 
-def test_generation_service_low_relevance_abstention(mock_candidates):
+def test_generation_service_low_relevance_abstention():
     service = GenerationService(llm_client=MockOfflineLLMClient())
-    # Set high threshold to trigger abstention
-    response = service.generate("What is password policy?", mock_candidates, relevance_threshold=0.95)
+    low_candidates = [
+        {
+            "chunk_id": "chunk_low",
+            "text": "Unrelated topic about ancient architecture in 400 BC.",
+            "rerank_score": 0.01,
+            "raw_rerank_score": -10.0,
+            "metadata": {
+                "document_name": "history.txt",
+                "access_level": "public",
+                "version": "1.0"
+            }
+        }
+    ]
+    response = service.generate("What is password policy?", low_candidates)
 
     assert response.is_abstained is True
     assert response.answer == ABSTAIN_TEXT
-    assert response.retrieved_chunks_count == 2
+    assert response.retrieved_chunks_count == 1
 
 def test_generation_service_success(mock_candidates):
     service = GenerationService(llm_client=MockOfflineLLMClient())
-    response = service.generate("What is password policy?", mock_candidates, relevance_threshold=0.3)
+    response = service.generate("What is password policy?", mock_candidates)
 
     assert response.is_abstained is False
     assert "NexaCloud Password Policy" in response.answer

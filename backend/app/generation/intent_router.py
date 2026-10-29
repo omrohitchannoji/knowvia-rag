@@ -63,7 +63,7 @@ OUT_OF_SCOPE_PATTERNS = [
     r"\btell\s+me\s+a\s+joke\b",
     r"\bsing\s+a\s+song\b",
     r"\b(cricket|football)\s+match\b",
-    r"\bwho\s+won\s+yesterday\b"
+    r"\bwho\s+won\b"
 ]
 
 class IntentRouter:
@@ -87,7 +87,7 @@ class IntentRouter:
         normalized_q = re.sub(r"[^\w\s]", "", clean_q.lower()).strip()
 
         # Check for technical terms that indicate Knowledge RAG evaluation
-        tech_pattern = r"\b(kubernetes|job|jobs|cronjob|cronjobs|hpa|vpa|autoscale|autoscaling|databricks|parallelism|pod|pods|queue|workload|container|docker|api|apis|token|auth|security|replication|cluster)\b"
+        tech_pattern = r"\b(kubernetes|job|jobs|cronjob|cronjobs|hpa|vpa|autoscale|autoscaling|databricks|parallelism|pod|pods|queue|workload|container|docker|api|apis|token|auth|security|replication|cluster|policy|policies|rto|rpo|password|disaster|recovery)\b"
         has_tech_keyword = bool(re.search(tech_pattern, normalized_q))
 
         if not has_tech_keyword:
