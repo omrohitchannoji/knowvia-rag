@@ -16,10 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies with CPU PyTorch index
-COPY requirements.txt .
-RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt
+# Copy frontend requirements and install lightweight dependencies
+COPY frontend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy frontend UI application code
 COPY frontend/ ./frontend/
