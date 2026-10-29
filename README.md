@@ -17,7 +17,7 @@ Unlike naive RAG implementations, Knowvia AI incorporates **Structure-Aware Data
 
 | Resource | Access Link | Description |
 | :--- | :--- | :--- |
-| **Streamlit Web UI** | [share.streamlit.io](https://share.streamlit.io) | Production Glassmorphic Interactive Dashboard |
+| **Streamlit Web UI** | [share.streamlit.io](https://knowvia-rag.streamlit.app/) | Production Glassmorphic Interactive Dashboard |
 | **FastAPI Backend Server** | `http://13.205.104.107:8000/api/v1` | AWS EC2 Instance with Permanent Static Elastic IP |
 | **Interactive API Documentation** | `http://13.205.104.107:8000/docs` | Swagger UI for REST API exploration |
 | **System Health Check** | `http://13.205.104.107:8000/api/v1/health` | Live diagnostic status & component monitoring |
