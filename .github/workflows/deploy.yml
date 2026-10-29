@@ -50,5 +50,7 @@ jobs:
           fi
           git pull || true
           sudo docker builder prune -af
-          sudo docker compose up -d --build
+          sudo docker compose down || true
+          sudo docker rm -f knowvia-backend knowvia-frontend || true
+          sudo docker compose up -d --build --remove-orphans
           sudo docker image prune -f
