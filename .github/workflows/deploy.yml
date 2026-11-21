@@ -51,6 +51,7 @@ jobs:
             cd /home/ubuntu
           fi
           git pull || true
+          sed -i 's/^QDRANT_URL=https:\/\/e0660e98/# QDRANT_URL=https:\/\/e0660e98/' .env || true
           sudo docker builder prune -af
           sudo docker compose down || true
           sudo docker rm -f knowvia-backend knowvia-frontend || true

@@ -20,21 +20,33 @@ class QdrantVectorStore:
         self.vector_size = vector_size or settings.EMBEDDING_DIMENSION
 
         # Client Connection Setup
+        storage_path = path or settings.QDRANT_STORAGE_PATH
         if location == ":memory:":
             logger.info("Initializing in-memory Qdrant Vector DB for testing")
             self.client = QdrantClient(location=":memory:")
+            self._ensure_collection_exists()
         elif url or settings.QDRANT_URL:
-            logger.info(f"Connecting to Cloud Qdrant Vector DB at [{url or settings.QDRANT_URL}]")
-            self.client = QdrantClient(
-                url=url or settings.QDRANT_URL,
-                api_key=api_key or settings.QDRANT_API_KEY
-            )
+            target_url = url or settings.QDRANT_URL
+            target_key = api_key or settings.QDRANT_API_KEY
+            logger.info(f"Connecting to Cloud Qdrant Vector DB at [{target_url}]")
+            try:
+                self.client = QdrantClient(
+                    url=target_url,
+                    api_key=target_key,
+                    timeout=5
+                )
+                self._ensure_collection_exists()
+            except Exception as e:
+                logger.warning(
+                    f"Failed to connect to Cloud Qdrant Vector DB at [{target_url}]: {e}. "
+                    f"Falling back to local persistent Qdrant Vector DB at [{storage_path}]."
+                )
+                self.client = QdrantClient(path=storage_path)
+                self._ensure_collection_exists()
         else:
-            storage_path = path or settings.QDRANT_STORAGE_PATH
             logger.info(f"Initializing local persistent Qdrant Vector DB at [{storage_path}]")
             self.client = QdrantClient(path=storage_path)
-
-        self._ensure_collection_exists()
+            self._ensure_collection_exists()
 
     def _ensure_payload_indexes(self):
         """Creates required payload indexes for metadata filtering on Qdrant Cloud."""
