@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     ANSWERABILITY_PARTIAL_THRESHOLD: float = Field(default=0.20)
     MIN_SUPPORTING_DOCS: int = Field(default=1)
 
+    # Authentication & Security
+    JWT_SECRET_KEY: str = Field(default="knowvia-local-dev-secret-key-change-in-production-123456")
+    JWT_ALGORITHM: str = Field(default="HS256")
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

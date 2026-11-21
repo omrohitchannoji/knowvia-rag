@@ -179,8 +179,34 @@ st.session_state.setdefault("top_k", 5)
 st.session_state.setdefault("filter_doc_type", "All")
 
 # ----------------------------------------------------------------------------
-# Cached backend calls
+# Authentication & Backend Calls
 # ----------------------------------------------------------------------------
+def get_auth_headers(role: str = "INTERNAL_USER") -> dict:
+    secret = (
+        st.secrets["JWT_SECRET_KEY"]
+        if hasattr(st, "secrets") and "JWT_SECRET_KEY" in st.secrets
+        else os.getenv("JWT_SECRET_KEY", "knowvia-local-dev-secret-key-change-in-production-123456")
+    )
+    algorithm = (
+        st.secrets["JWT_ALGORITHM"]
+        if hasattr(st, "secrets") and "JWT_ALGORITHM" in st.secrets
+        else os.getenv("JWT_ALGORITHM", "HS256")
+    )
+    try:
+        from datetime import datetime, timezone, timedelta
+        from jose import jwt
+        now = datetime.now(timezone.utc)
+        payload = {
+            "sub": "streamlit_ui_user",
+            "role": role,
+            "exp": now + timedelta(hours=24),
+            "iat": now
+        }
+        token = jwt.encode(payload, secret, algorithm=algorithm)
+        return {"Authorization": f"Bearer {token}"}
+    except Exception:
+        return {}
+
 @st.cache_data(ttl=HEALTH_TTL, show_spinner=False)
 def check_health():
     resp = requests.get(f"{API_BASE_URL}/health", timeout=2)
@@ -188,7 +214,8 @@ def check_health():
 
 @st.cache_data(ttl=DOCS_TTL, show_spinner=False)
 def fetch_documents():
-    resp = requests.get(f"{API_BASE_URL}/documents/list", timeout=5)
+    role = st.session_state.get("user_role", "INTERNAL_USER")
+    resp = requests.get(f"{API_BASE_URL}/documents/list", headers=get_auth_headers(role), timeout=5)
     resp.raise_for_status()
     return resp.json()
 
@@ -200,7 +227,8 @@ def call_query_api(prompt, user_role, top_k, doc_filter, chat_history):
         "filter_document_type": doc_filter,
         "chat_history": chat_history,
     }
-    res = requests.post(f"{API_BASE_URL}/query", json=payload, timeout=45)
+    headers = get_auth_headers(user_role)
+    res = requests.post(f"{API_BASE_URL}/query", json=payload, headers=headers, timeout=45)
     res.raise_for_status()
     return res.json()
 
@@ -407,7 +435,13 @@ elif st.session_state.view == "docs":
             try:
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                 data = {"access_level": up_access, "version": up_version, "document_type": up_type}
-                up_res = requests.post(f"{API_BASE_URL}/documents/upload", files=files, data=data, timeout=30)
+                up_res = requests.post(
+                    f"{API_BASE_URL}/documents/upload",
+                    files=files,
+                    data=data,
+                    headers=get_auth_headers("ADMIN"),
+                    timeout=30
+                )
                 if up_res.status_code == 201:
                     res_json = up_res.json()
                     st.success(f"Indexed **{res_json['document_name']}** ({res_json['total_chunks']} chunks)")
@@ -455,7 +489,10 @@ elif st.session_state.view == "docs":
                 label_visibility="collapsed",
             )
             if del_col2.button("🗑️ Delete", use_container_width=True):
-                del_res = requests.delete(f"{API_BASE_URL}/documents/{doc_to_delete}")
+                del_res = requests.delete(
+                    f"{API_BASE_URL}/documents/{doc_to_delete}",
+                    headers=get_auth_headers("ADMIN")
+                )
                 if del_res.status_code == 200:
                     st.success(f"Deleted {doc_to_delete}")
                     fetch_documents.clear()

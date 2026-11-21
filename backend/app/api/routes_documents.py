@@ -2,7 +2,8 @@ import os
 import shutil
 import tempfile
 from typing import List, Optional
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status, Depends
+from backend.app.security.auth import get_current_user
 from backend.app.schemas.documents import DocumentUploadResponse, DocumentInfo
 from backend.app.services.document_service import get_document_service
 from backend.app.core.logging import logger
@@ -16,12 +17,7 @@ router = APIRouter(prefix="/documents", tags=["Document Management"])
     summary="Upload and Ingest Document",
     description="Uploads a Markdown (.md) or PDF (.pdf) document, parses structure, creates embeddings, and indexes into Qdrant & BM25."
 )
-def upload_document(
-    file: UploadFile = File(...),
-    access_level: Optional[str] = Form("PUBLIC_USER"),
-    version: Optional[str] = Form("1.0"),
-    document_type: Optional[str] = Form("technical_documentation")
-):
+def upload_document(file: UploadFile = File(...), access_level: Optional[str] = Form("PUBLIC_USER"), version: Optional[str] = Form("1.0"), document_type: Optional[str] = Form("technical_documentation"), user: dict = Depends(get_current_user)):
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".md", ".pdf"]:
         raise HTTPException(
@@ -62,11 +58,15 @@ def upload_document(
     summary="List Indexed Documents",
     description="Returns a list of all unique documents currently indexed in the vector store with chunk statistics."
 )
-def list_documents():
+def list_documents(user: dict = Depends(get_current_user)):
     doc_service = get_document_service()
     docs = doc_service.list_documents()
+    # Optionally enforce access level filtering based on user role
     formatted_docs = []
     for d in docs:
+        # For PUBLIC_USER, only return documents with access_level PUBLIC_USER
+        if user["role"] == "PUBLIC_USER" and d.get("access_level") != "PUBLIC_USER":
+            continue
         formatted_docs.append(DocumentInfo(
             document_id=d.get("document_id", "unknown"),
             document_name=d.get("document_name", "Unknown"),
@@ -83,7 +83,10 @@ def list_documents():
     summary="Delete Document",
     description="Deletes all indexed vector points and sparse tokens associated with document_id."
 )
-def delete_document(document_id: str):
+def delete_document(document_id: str, user: dict = Depends(get_current_user)):
+    # Only ADMIN role can delete documents
+    if user["role"] != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions to delete documents")
     doc_service = get_document_service()
     success = doc_service.delete_document(document_id)
     if not success:

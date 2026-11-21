@@ -27,11 +27,13 @@ jobs:
 
     - name: Run Pytest Test Suite
       env:
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY || 'knowvia-deploy-ci-secret-key-123456' }}
+        JWT_ALGORITHM: HS256
         QDRANT_URL: ${{ secrets.QDRANT_URL }}
         QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
-        pytest tests/
+        pytest -m "not external" tests/
 
     - name: Deploy to AWS EC2 via SSH
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'

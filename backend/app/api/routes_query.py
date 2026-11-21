@@ -1,5 +1,6 @@
 import time
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
+from backend.app.security.auth import get_current_user
 from backend.app.schemas.query import QueryRequest, QueryResponse, ChatMessage
 from backend.app.security.input_guardrails import InputGuardrail
 from backend.app.security.output_guardrails import OutputGuardrail
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/query", tags=["RAG Question Answering"])
     summary="Execute RAG Question Answering Query",
     description="Full RAG Pipeline: Guardrails -> Intent Routing & Semantic Normalization -> Pre-Retrieval RBAC -> Hybrid Search -> Rerank -> LLM Generation."
 )
-def execute_query(req: QueryRequest):
+def execute_query(req: QueryRequest, user: dict = Depends(get_current_user)):
     start_time = time.perf_counter()
 
     # 1. Input Guardrail Inspection (Prompt Injection & Jailbreak Defense)
@@ -99,7 +100,7 @@ def execute_query(req: QueryRequest):
         hybrid_retriever = get_hybrid_retriever()
         hybrid_candidates = hybrid_retriever.retrieve(
             query=search_query,
-            user_role=req.user_role,
+            user_role=user["role"],
             top_k=req.top_k or 5,
             filter_status=req.filter_status,
             filter_document_type=req.filter_document_type

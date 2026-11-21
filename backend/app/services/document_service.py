@@ -112,7 +112,11 @@ class DocumentService:
 
         if ext in [".md", ".markdown"]:
             content, frontmatter = load_markdown_file(file_path)
-            merged_meta.update(frontmatter)
+            for k, v in frontmatter.items():
+                if k not in override_metadata:
+                    merged_meta[k] = v
+            doc_id = merged_meta.get("document_id", doc_id)
+            doc_name = merged_meta.get("document_name", doc_name)
             sections = parse_markdown_structure(content, doc_name)
             chunks = create_structure_aware_chunks(sections, doc_id, doc_name)
 
@@ -202,13 +206,28 @@ class DocumentService:
         chunk_texts = [c.text for c in chunks]
         vectors = self.embedding_service.embed_batch(chunk_texts)
 
-        # Index into Qdrant Vector Store
-        indexed_count = self.vector_store.add_chunks(chunks, vectors, metadata_list)
+        # Deduplicate: Remove prior existing chunks for this doc_id from BM25 to prevent duplicates on repeat ingestion
+        remaining_pairs = [
+            (c, m) for c, m in zip(self.all_chunks, self.all_metadata)
+            if m.get("document_id") != doc_id
+        ]
+        self.all_chunks = [c for c, m in remaining_pairs]
+        self.all_metadata = [m for c, m in remaining_pairs]
 
-        # Index into BM25 Sparse Index
-        self.all_chunks.extend(chunks)
-        self.all_metadata.extend(metadata_list)
-        self.bm25_retriever.index_chunks(self.all_chunks, self.all_metadata)
+        try:
+            # Index into Qdrant Vector Store
+            indexed_count = self.vector_store.add_chunks(chunks, vectors, metadata_list)
+            # Index into BM25 Sparse Index
+            self.all_chunks.extend(chunks)
+            self.all_metadata.extend(metadata_list)
+            self.bm25_retriever.index_chunks(self.all_chunks, self.all_metadata)
+        except Exception as e:
+            logger.error(f"Failed to synchronize indexes for document {doc_id}: {e}")
+            try:
+                self.vector_store.delete_document(doc_id)
+            except Exception:
+                pass
+            raise
 
         return {
             "document_id": doc_id,
@@ -219,7 +238,28 @@ class DocumentService:
         }
 
     def delete_document(self, document_id: str) -> bool:
-        return self.vector_store.delete_document(document_id)
+        # Delete from Qdrant vector store
+        deleted = self.vector_store.delete_document(document_id)
+        if not deleted:
+            return False
+        # Remove associated chunks and metadata from in‑memory BM25 index using paired filtering
+        original_len = len(self.all_chunks)
+        remaining_pairs = [
+            (c, m) for c, m in zip(self.all_chunks, self.all_metadata)
+            if m.get("document_id") != document_id
+        ]
+        self.all_chunks = [c for c, m in remaining_pairs]
+        self.all_metadata = [m for c, m in remaining_pairs]
+        # Re‑index BM25 with remaining chunks
+        if self.all_chunks:
+            self.bm25_retriever.index_chunks(self.all_chunks, self.all_metadata)
+        else:
+            self.bm25_retriever.indexed_chunks = []
+            self.bm25_retriever.indexed_metadata = []
+            self.bm25_retriever.bm25 = None
+        removed_count = original_len - len(self.all_chunks)
+        logger.info(f"Deleted document {document_id}; BM25 index synced (removed {removed_count} chunks).")
+        return True
 
     def list_documents(self) -> List[Dict[str, Any]]:
         return self.vector_store.list_documents()

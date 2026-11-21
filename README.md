@@ -211,22 +211,47 @@ Every document chunk indexed in Qdrant Cloud and BM25 carries the following JSON
 
 ---
 
+---
+
+## 🔐 Server-Side Authentication & Authorization (RBAC)
+
+Knowvia AI enforces **server-side JWT-based authentication** across all protected endpoints. Identity and role claims are cryptographically verified from the signed Bearer token rather than trusted from client-supplied request bodies.
+
+### Supported Roles & Pre-Retrieval Permissions
+* **`PUBLIC_USER`**: Authorized to access and query public technical documentation only.
+* **`INTERNAL_USER`**: Authorized to query public documentation and internal operational runbooks.
+* **`ADMIN`**: Full administrative privileges, including restricted corporate policies, document ingestion, and document deletion.
+
+### Generating a Token for Local Development
+Tokens are signed with `JWT_SECRET_KEY` using HMAC-SHA256 (`HS256`). Example payload:
+```json
+{
+  "sub": "user_123",
+  "role": "PUBLIC_USER",
+  "exp": 1790000000
+}
+```
+
+---
+
 ## 🛠️ API Specification & Endpoints
 
 ### 1. Execute RAG Question Answering Query
-`POST /api/v1/query`
+`POST /api/v1/query`  
+**Headers:** `Authorization: Bearer <JWT_TOKEN>`
 
 **Request Body:**
 ```json
 {
   "query": "What is the password policy under NexaCloud Security Policy v2.0?",
-  "user_role": "INTERNAL_USER",
+  "top_k": 5,
   "chat_history": [
     {"role": "user", "content": "Tell me about security authentication."},
     {"role": "assistant", "content": "NexaCloud enforces multi-factor authentication and strict password requirements."}
   ]
 }
 ```
+*Note: The user role is derived strictly from the verified JWT token claims on the server, preventing privilege escalation attacks via request payload manipulation.*
 
 **Response Body:**
 ```json
@@ -249,76 +274,106 @@ Every document chunk indexed in Qdrant Cloud and BM25 carries the following JSON
 }
 ```
 
-### 2. Additional Core Endpoints
-* `GET /api/v1/documents` — List indexed documents with metadata filters.
-* `POST /api/v1/documents/upload` — Ingest and chunk new Markdown or PDF documents.
-* `GET /api/v1/health` — Returns system health status, LLM provider, vector DB status, and uptime.
+### 2. Document Lifecycle Management Endpoints
+* `GET /api/v1/documents/list` — Lists indexed documents. Role-filtered: `PUBLIC_USER` callers only see public documents. *(Requires Bearer token)*
+* `POST /api/v1/documents/upload` — Ingests, embeds, and indexes new Markdown or PDF documents into Qdrant & BM25 with automatic deduplication. *(Requires Bearer token)*
+* `DELETE /api/v1/documents/{document_id}` — Deletes document from Qdrant vector store and synchronizes the in-memory BM25 sparse index to eliminate stale entries. *(Requires `ADMIN` role token)*
+* `GET /api/v1/health` — Unauthenticated diagnostic health check and uptime monitor.
 
 ---
 
-## 📈 Evaluation Benchmarks & Metrics
+---
 
-The system is continuously evaluated against a 30-question benchmark dataset (`evaluation/dataset.json`) across 16 categories:
+## 🛡️ Security Guardrails & Realistic Limitations
 
-| Metric | Score | Target | Description |
-| :--- | :---: | :---: | :--- |
-| **Recall@5** | **0.875** | $> 0.800$ | Proportion of ground-truth chunks retrieved in top 5 |
-| **MRR (Mean Reciprocal Rank)** | **0.875** | $> 0.800$ | Rank position precision of first relevant document |
-| **NDCG@5** | **0.880** | $> 0.850$ | Normalized Discounted Cumulative Gain |
-| **Groundedness Score** | **0.950** | $> 0.900$ | Citation verification & hallucination mitigation score |
-| **Greeting Latency** | **0.5 ms** | Sub-ms | Intent router intercept speed for non-RAG queries |
+Knowvia AI implements defense-in-depth across input and output boundaries:
+1. **Input Guardrail (`InputGuardrail.inspect_query`)**: Performs heuristic pattern matching and regex classification against recognized prompt injection, jailbreak attempts, and system prompt leakage attacks.
+   > **⚠️ Security Scope & Limitations**: Regex and keyword guardrails serve as a fast, deterministic first layer of defense against known prompt injection templates. They do **not** mathematically guarantee protection against all novel, obfuscated, token-manipulated, or multi-turn adversarial jailbreak attacks. Production enterprise environments should layer semantic guardrail classifiers (e.g., Llama Guard or NeMo Guardrails) atop heuristic filters.
+2. **Output Guardrail (`OutputGuardrail.redact_secrets`)**: Scans LLM generations for sensitive credentials (AWS access keys, API tokens, connection strings) using regex patterns and replaces matches with `[REDACTED_SECRET]`.
+3. **Pre-Retrieval Role-Based Access Control**: Server-verified JWT claims are translated into metadata payload filters applied directly during Qdrant and BM25 index lookups, preventing restricted chunks from entering candidate pools.
+
+---
+
+## 📈 Evaluation Benchmarks & Reproducibility
+
+The repository includes a curated, reproducible 10-query benchmark dataset (`evaluation/dataset.json`) covering:
+* **Technical Knowledge (6 queries)**: Kubernetes Jobs, CronJobs, HPA, job monitoring, Databricks job management.
+* **Conversational (2 queries)**: Greetings and identity requests verifying sub-millisecond intent interception.
+* **Out-of-Scope (1 query)**: Corporate boundary enforcement and graceful abstention.
+* **Distractor Robustness (1 query)**: Noisy corpus query testing retrieval disambiguation.
+
+### Running the Retrieval & Generation Benchmark
+To evaluate the 4 retrieval strategies (Dense Only, BM25 Only, Hybrid RRF, and Hybrid + Cross-Encoder Reranker):
+```bash
+python evaluation/run_eval.py
+```
+
+### Metric Definitions
+* **Recall@5**: Fraction of queries where the ground-truth document was present in the top 5 retrieved candidates ($Recall@k = \frac{|\text{Retrieved}_k \cap \text{Relevant}|}{|\text{Relevant}|}$).
+* **MRR (Mean Reciprocal Rank)**: $\frac{1}{|Q|}\sum_{i=1}^{|Q|}\frac{1}{\text{rank}_i}$, measuring the reciprocal rank of the first relevant document.
+* **NDCG@5**: Normalized Discounted Cumulative Gain accounting for position discount of relevant passages.
+* **Groundedness Score**: Deterministic keyword precision check verifying expected technical terminology in generated answers without unsupported claims.
+* **Intent Classification Accuracy**: Percentage of benchmark queries correctly categorized by the 2-tier router.
 
 ---
 
 ## ⚙️ Local Development Setup
 
-### 1. Clone & Initialize Environment
-```bash
+### 1. Initialize & Activate Environment
+```powershell
+# Clone repository
 git clone https://github.com/omrohitchannoji/knowvia-rag.git
 cd knowvia-rag
 
-# Create virtual environment
-python -m venv venv
+# Windows PowerShell:
+. .\venv\Scripts\Activate.ps1
 
-# Activate virtual environment
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
+# Linux / macOS:
 source venv/bin/activate
 
-# Install dependencies
+# Install dependencies (including python-jose for JWT auth)
 pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment Variables
-Create a `.env` file in the root directory:
+Create or update your `.env` file from `.env.example`:
 ```ini
+APP_NAME=Knowvia AI
+APP_ENV=development
+DEBUG=true
+
+# Server-Side JWT Authentication
+JWT_SECRET_KEY=your_secure_signing_secret_here
+JWT_ALGORITHM=HS256
+
+# LLM Provider Configuration
 LLM_PROVIDER=groq
 LLM_MODEL=openai/gpt-oss-20b
-GROQ_API_KEY=your_groq_api_key
+GROQ_API_KEY=your_groq_api_key_here
 
+# Vector DB & Embeddings
 VECTOR_DB_TYPE=qdrant
-QDRANT_URL=https://your-cluster-id.cloud.qdrant.io:6333
-QDRANT_API_KEY=your_qdrant_api_key
-QDRANT_COLLECTION=tech_doc_collection
+QDRANT_STORAGE_PATH=./qdrant_data
+COLLECTION_NAME=tech_doc_collection
 
 EMBEDDING_PROVIDER=sentence_transformers
 EMBEDDING_MODEL=all-MiniLM-L6-v2
 EMBEDDING_DIMENSION=384
 ```
 
-### 3. Launch Backend & Frontend Servers
+### 3. Run Safe Offline Test Suite
+To verify the entire authentication, RBAC, BM25 sync, guardrails, and pipeline test suite without needing external cloud credentials:
 ```bash
-# Terminal 1: FastAPI Backend
-uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
-
-# Terminal 2: Streamlit Frontend
-streamlit run frontend/app.py
+pytest -m "not external" -v
 ```
 
-### 4. Run Pytest Suite
+### 4. Launch Backend & Frontend Servers
 ```bash
-pytest
+# Terminal 1: FastAPI Backend Server
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# Terminal 2: Streamlit Interactive UI
+streamlit run frontend/app.py
 ```
 
 ---
