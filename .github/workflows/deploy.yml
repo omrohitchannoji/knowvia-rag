@@ -42,6 +42,8 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
+        command_timeout: 30m
+        timeout: 60s
         script: |
           if [ -d "/home/ubuntu/knowvia-rag" ]; then
             cd /home/ubuntu/knowvia-rag
@@ -52,7 +54,6 @@ jobs:
           fi
           git pull || true
           sed -i 's/^QDRANT_URL=https:\/\/e0660e98/# QDRANT_URL=https:\/\/e0660e98/' .env || true
-          sudo docker builder prune -af
           sudo docker compose down || true
           sudo docker rm -f knowvia-backend knowvia-frontend || true
           sudo docker compose up -d --build --remove-orphans
