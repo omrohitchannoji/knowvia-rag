@@ -10,6 +10,9 @@ class BaseLLMClient(ABC):
     """
     Abstract interface for LLM providers.
     """
+    def __init__(self):
+        self.last_usage: dict = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "model": "unknown"}
+
     @abstractmethod
     def generate(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> str:
         """
@@ -24,6 +27,7 @@ class GroqLLMClient(BaseLLMClient):
     Supports models hosted on Groq (openai/gpt-oss-20b, llama-3.1-8b-instant, qwen-2.5-32b, etc.)
     """
     def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
+        super().__init__()
         self.api_key = api_key or os.environ.get("GROQ_API_KEY") or getattr(settings, "GROQ_API_KEY", None) or getattr(settings, "LLM_API_KEY", None)
         self.model_name = model_name or getattr(settings, "LLM_MODEL", "openai/gpt-oss-20b")
         try:
@@ -40,7 +44,9 @@ class GroqLLMClient(BaseLLMClient):
             if not current_key or current_key in ["your_groq_api_key_here", "your_hf_token_here", "your_api_key_here", "dummy", "mock", "none"]:
                 logger.warning("No valid GROQ_API_KEY / LLM_API_KEY found. Utilizing MockOfflineLLMClient fallback.")
                 mock_client = MockOfflineLLMClient()
-                return mock_client.generate(system_prompt, user_prompt, temperature)
+                res = mock_client.generate(system_prompt, user_prompt, temperature)
+                self.last_usage = mock_client.last_usage
+                return res
 
             if current_key != self.api_key:
                 self.api_key = current_key
@@ -55,6 +61,22 @@ class GroqLLMClient(BaseLLMClient):
                 ],
                 temperature=temperature if temperature > 0.0 else getattr(settings, "LLM_TEMPERATURE", 0.0)
             )
+            if hasattr(response, "usage") and response.usage:
+                self.last_usage = {
+                    "usage_available": True,
+                    "prompt_tokens": getattr(response.usage, "prompt_tokens", None),
+                    "completion_tokens": getattr(response.usage, "completion_tokens", None),
+                    "total_tokens": getattr(response.usage, "total_tokens", None),
+                    "model": self.model_name
+                }
+            else:
+                self.last_usage = {
+                    "usage_available": False,
+                    "prompt_tokens": None,
+                    "completion_tokens": None,
+                    "total_tokens": None,
+                    "model": self.model_name
+                }
             raw_text = response.choices[0].message.content or ""
             cleaned_text = re.sub(r"<thought>.*?</thought>", "", raw_text, flags=re.DOTALL).strip()
             
@@ -64,7 +86,9 @@ class GroqLLMClient(BaseLLMClient):
         except Exception as e:
             logger.warning(f"Groq LLM API invocation failed ({e}). Falling back to MockOfflineLLMClient.")
             mock_client = MockOfflineLLMClient()
-            return mock_client.generate(system_prompt, user_prompt, temperature)
+            res = mock_client.generate(system_prompt, user_prompt, temperature)
+            self.last_usage = mock_client.last_usage
+            return res
 
 
 class GPTOSSClient(GroqLLMClient):
@@ -153,6 +177,13 @@ class MockOfflineLLMClient(BaseLLMClient):
 
         # Return synthesized response referencing available sources
         cited_sources = " ".join([f"[Source {s}]" for s in sorted(set(sources))])
+        self.last_usage = {
+            "usage_available": False,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+            "model": "mock-offline"
+        }
         return f"Based on the provided documentation, here is the relevant policy/technical information: {context_part[:250]}... {cited_sources}"
 
 

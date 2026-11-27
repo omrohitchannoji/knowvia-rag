@@ -43,6 +43,9 @@ class Reranker:
         raw_scores = self.model.predict(pairs)
 
         import math
+        max_hybrid = max((float(c.get("hybrid_score", 0.0) or 0.0) for c in candidates), default=0.0)
+        alpha = 0.75  # Weight on cross-encoder; 0.25 on normalized RRF consensus
+
         reranked_candidates = []
         for idx, candidate in enumerate(candidates):
             item = candidate.copy()
@@ -51,10 +54,17 @@ class Reranker:
             prob = 1.0 / (1.0 + math.exp(-logit))
             item["rerank_score"] = round(prob, 4)
             item["raw_rerank_score"] = round(logit, 4)
+
+            if max_hybrid > 0.0 and "hybrid_score" in candidate:
+                h_norm = float(candidate.get("hybrid_score", 0.0) or 0.0) / max_hybrid
+                item["blended_score"] = round(alpha * prob + (1.0 - alpha) * h_norm, 4)
+            else:
+                item["blended_score"] = item["rerank_score"]
+
             reranked_candidates.append(item)
 
-        # Sort descending by rerank_score
-        reranked_candidates.sort(key=lambda x: x["rerank_score"], reverse=True)
+        # Sort descending by blended_score (equals rerank_score when no hybrid_score)
+        reranked_candidates.sort(key=lambda x: x["blended_score"], reverse=True)
         return reranked_candidates[:n]
 
 

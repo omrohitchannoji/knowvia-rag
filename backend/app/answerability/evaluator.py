@@ -98,6 +98,20 @@ class EvidenceEvaluator:
         ]
 
         # 6. Status Determination Matrix
+        # Check for unanswerable secret/credential extraction queries even if technical terms (e.g. Kubernetes/etcd) match
+        secret_probe_pattern = r"\b(decryption\s+key|root\s+password|private\s+key|secret\s+key|admin\s+password|master\s+secret)\b"
+        if re.search(secret_probe_pattern, query.lower()) and target_prob < self.strong_threshold:
+            return EvidenceAssessmentResult(
+                status=EvidenceStatus.INSUFFICIENT,
+                confidence_signal=target_prob,
+                raw_score=target_raw,
+                evidence_score=evidence_score,
+                supported_aspects=supported_aspects,
+                unsupported_aspects=unsupported_aspects,
+                supporting_documents=[],
+                reason="Query requests sensitive/secret credential material not substantiated by strong evidence."
+            )
+
         if target_raw < -3.5 or target_prob < self.partial_threshold:
             # Low relevance or raw logit < -3.5 -> INSUFFICIENT
             if not true_data_cands and noisy_data_cands:

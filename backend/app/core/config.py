@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -57,8 +57,32 @@ class Settings(BaseSettings):
     MIN_SUPPORTING_DOCS: int = Field(default=1)
 
     # Authentication & Security
-    JWT_SECRET_KEY: str = Field(default="knowvia-local-dev-secret-key-change-in-production-123456")
+    REQUIRE_AUTH: bool = Field(default=True)
+    ALLOW_ANONYMOUS_ACCESS: bool = Field(default=False)
+    JWT_SECRET_KEY: Optional[str] = Field(default=None)
     JWT_ALGORITHM: str = Field(default="HS256")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60)
+
+    # Cost Tracking & Pricing Table (USD per 1,000,000 tokens)
+    # Fill in verified provider rates; unset (None) rates report cost as unavailable rather than guessing.
+    MODEL_PRICING: Dict[str, Dict[str, Optional[float]]] = Field(
+        default={
+            "openai/gpt-oss-20b": {"input_per_m": None, "output_per_m": None},
+            "qwen/qwen3.8-27b": {"input_per_m": None, "output_per_m": None},
+            "llama-3.1-8b-instant": {"input_per_m": None, "output_per_m": None},
+            "llama-3.3-70b-versatile": {"input_per_m": None, "output_per_m": None},
+            "gpt-4o-mini": {"input_per_m": None, "output_per_m": None},
+            "mock-offline": {"input_per_m": None, "output_per_m": None},
+        }
+    )
+
+    # Observability & Langfuse Tracing
+    ENABLE_TRACING: bool = Field(default=True)
+    TRACE_REDACT_PAYLOADS: bool = Field(default=True)
+    LANGFUSE_ENABLED: bool = Field(default=False)
+    LANGFUSE_PUBLIC_KEY: Optional[str] = Field(default=None)
+    LANGFUSE_SECRET_KEY: Optional[str] = Field(default=None)
+    LANGFUSE_HOST: Optional[str] = Field(default=None)
 
     model_config = {
         "env_file": ".env",

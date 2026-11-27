@@ -274,46 +274,68 @@ Tokens are signed with `JWT_SECRET_KEY` using HMAC-SHA256 (`HS256`). Example pay
 }
 ```
 
-### 2. Document Lifecycle Management Endpoints
+### 2. Authentication & Identity-Based Access Control Endpoints
+* `POST /api/v1/auth/login` — Authenticates credentials and returns a signed JWT access token with a server-assigned role (`PUBLIC_USER`, `INTERNAL_USER`, `ADMIN`).
+* `POST /api/v1/auth/token` — OAuth2 password flow endpoint compatible with OpenAPI Swagger UI.
+* `GET /api/v1/auth/me` — Returns verified user profile and assigned role from the Bearer token.
+* `POST /api/v1/query` — Submits a user query with chat history. Requires Bearer token. The user's role is strictly enforced from the server-verified JWT token; caller-supplied body roles are rejected with an audit warning.
+
+### 3. Document Lifecycle Management Endpoints
 * `GET /api/v1/documents/list` — Lists indexed documents. Role-filtered: `PUBLIC_USER` callers only see public documents. *(Requires Bearer token)*
-* `POST /api/v1/documents/upload` — Ingests, embeds, and indexes new Markdown or PDF documents into Qdrant & BM25 with automatic deduplication. *(Requires Bearer token)*
-* `DELETE /api/v1/documents/{document_id}` — Deletes document from Qdrant vector store and synchronizes the in-memory BM25 sparse index to eliminate stale entries. *(Requires `ADMIN` role token)*
+* `POST /api/v1/documents/upload` — Ingests, embeds, and indexes new Markdown or PDF documents into Qdrant & BM25 with transactional rollback on partial failure. *(Requires Bearer token)*
+* `DELETE /api/v1/documents/{document_id}` — Deletes document from Qdrant vector store and synchronizes the in-memory BM25 sparse index (`bm25_index = None`) to eliminate stale entries. *(Requires `ADMIN` role token)*
 * `GET /api/v1/health` — Unauthenticated diagnostic health check and uptime monitor.
 
 ---
 
+## 🛡️ Identity, Access Control & Lifecycle Architecture
+
+### Server-Side Identity Verification & Fail-Closed RBAC
+* **No Trust in Request Roles**: The backend rejects all attempts to set or override roles via request payloads (`user_role`). Even if a malicious caller supplies `"user_role": "ADMIN"`, the system audits the attempt and strictly enforces the server-assigned role from the verified JWT.
+* **Fail-Closed Secrets**: When running in authenticated mode (`REQUIRE_AUTH=True`), the signing secret is required from the environment (`JWT_SECRET_KEY`). If absent, the application immediately throws a `RuntimeError` and terminates, preventing insecure fallback secrets in source code.
+* **Pre-Retrieval Vector and BM25 Filtering**: Server-verified JWT claims are translated into metadata payload filters applied directly during Qdrant (`Filter(must=[FieldCondition(key="access_level", match=MatchAny(values=...))])`) and BM25 lookups, ensuring restricted chunks never enter candidate pools.
+
+### Atomic Document Lifecycle & Ingestion Rollback
+* **BM25 In-Memory Consistency**: Document deletion invalidates both Qdrant vectors and resets the in-memory BM25 index state (`bm25_index = None`), forcing a clean re-initialization on subsequent queries and preventing ghost matches from deleted documents.
+* **Ingestion Transactional Rollback**: During multi-chunk ingestion, if vector embedding or storage fails midway, the document service captures an in-memory snapshot and executes an atomic rollback, preventing desynchronized state between Qdrant and BM25.
+
 ---
 
-## 🛡️ Security Guardrails & Realistic Limitations
+## 📊 Pipeline Tracing, Token Usage & Explicit Cost Accounting
 
-Knowvia AI implements defense-in-depth across input and output boundaries:
-1. **Input Guardrail (`InputGuardrail.inspect_query`)**: Performs heuristic pattern matching and regex classification against recognized prompt injection, jailbreak attempts, and system prompt leakage attacks.
-   > **⚠️ Security Scope & Limitations**: Regex and keyword guardrails serve as a fast, deterministic first layer of defense against known prompt injection templates. They do **not** mathematically guarantee protection against all novel, obfuscated, token-manipulated, or multi-turn adversarial jailbreak attacks. Production enterprise environments should layer semantic guardrail classifiers (e.g., Llama Guard or NeMo Guardrails) atop heuristic filters.
-2. **Output Guardrail (`OutputGuardrail.redact_secrets`)**: Scans LLM generations for sensitive credentials (AWS access keys, API tokens, connection strings) using regex patterns and replaces matches with `[REDACTED_SECRET]`.
-3. **Pre-Retrieval Role-Based Access Control**: Server-verified JWT claims are translated into metadata payload filters applied directly during Qdrant and BM25 index lookups, preventing restricted chunks from entering candidate pools.
+Every query execution is instrumented with stage-level latency spans and exact cost tracking:
+* **7 Instrumented Stages**: `guardrail`, `router`, `dense_retrieval`, `bm25_retrieval`, `fusion`, `reranking`, and `generation`.
+* **Langfuse + Offline Mock Mode**: Supports Langfuse (`LANGFUSE_ENABLED=True`) with automatic `offline_mock` fallback when Langfuse credentials are not configured.
+* **Zero Payload Leakage**: Full prompts, raw documents, query strings, and credentials are stripped from trace details by default (`TRACE_REDACT_PAYLOADS=True`).
+* **Explicit Pricing & Unavailable Handling**: Token usage is captured strictly from provider responses; missing usage (e.g., offline mock mode) is marked `unavailable` (`None`) and never estimated. Cost is computed from `MODEL_PRICING` in `backend/app/core/config.py` (rates are `None` by default until configured; unset rates report cost as `unavailable`).
+* **Latency & Token Reporting**: Run `python scripts/latency_report.py --split development` to measure per-stage p50/p95 latencies and tokens per query.
 
 ---
 
 ## 📈 Evaluation Benchmarks & Reproducibility
 
-The repository includes a curated, reproducible 10-query benchmark dataset (`evaluation/dataset.json`) covering:
-* **Technical Knowledge (6 queries)**: Kubernetes Jobs, CronJobs, HPA, job monitoring, Databricks job management.
-* **Conversational (2 queries)**: Greetings and identity requests verifying sub-millisecond intent interception.
-* **Out-of-Scope (1 query)**: Corporate boundary enforcement and graceful abstention.
-* **Distractor Robustness (1 query)**: Noisy corpus query testing retrieval disambiguation.
+The repository includes an AI-generated 60-query benchmark dataset (`evaluation/dataset.json`) partitioned into:
+* **Development Split (30 queries)**: Used for tuning and failure analysis.
+* **Held-Out Test Split (30 queries)**: Preserved as a historical baseline (`evaluation/results/eval_run_20261127_161913_held_out_test.json`).
 
-### Running the Retrieval & Generation Benchmark
-To evaluate the 4 retrieval strategies (Dense Only, BM25 Only, Hybrid RRF, and Hybrid + Cross-Encoder Reranker):
+> **⚠️ Dataset Limitations**: All benchmark questions and labels were generated by an AI assistant from the repository corpus (`data/TrueData`, `data/NoisyData`). Both splits share the same 5 primary underlying documents and contain thematic paraphrases across splits; therefore, the held-out split is **not** an unbiased or representative external benchmark.
+
+### Running Evaluation & Generation Quality Checks
 ```bash
-python evaluation/run_eval.py
+# 1. Retrieval & Abstention Ablation (5 modes)
+python evaluation/run_eval.py --split development --mode all
+
+# 2. Separate-Judge Generation Quality Evaluation (outputs CSV)
+python evaluation/run_generation_eval.py --split development
+
+# 3. Per-Stage Latency & Token Report
+python scripts/latency_report.py --split development
 ```
 
-### Metric Definitions
-* **Recall@5**: Fraction of queries where the ground-truth document was present in the top 5 retrieved candidates ($Recall@k = \frac{|\text{Retrieved}_k \cap \text{Relevant}|}{|\text{Relevant}|}$).
-* **MRR (Mean Reciprocal Rank)**: $\frac{1}{|Q|}\sum_{i=1}^{|Q|}\frac{1}{\text{rank}_i}$, measuring the reciprocal rank of the first relevant document.
-* **NDCG@5**: Normalized Discounted Cumulative Gain accounting for position discount of relevant passages.
-* **Groundedness Score**: Deterministic keyword precision check verifying expected technical terminology in generated answers without unsupported claims.
-* **Intent Classification Accuracy**: Percentage of benchmark queries correctly categorized by the 2-tier router.
+Full measured metrics, historical test baseline results, post-fix development results, and the explanation of the legacy identical Recall@5/MRR (0.8333) result are documented in [`evaluation/results.md`](evaluation/results.md).
+
+### Manual Review Sample (Pending)
+A 20-case sample for manual review is stored in [`evaluation/human_review_sample.json`](evaluation/human_review_sample.json) with all human judgment fields initialized to `"pending"` (`null`) awaiting manual annotation.
 
 ---
 

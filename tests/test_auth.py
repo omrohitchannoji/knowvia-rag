@@ -165,3 +165,153 @@ def test_cannot_elevate_role_via_request_body(mock_gen, mock_rerank, mock_retrie
     assert mock_retriever_inst.retrieve.called
     called_kwargs = mock_retriever_inst.retrieve.call_args.kwargs
     assert called_kwargs.get("user_role") == "PUBLIC_USER"
+
+def test_server_login_success_and_role_issuance():
+    """Verify that logging in with valid credentials issues verified role tokens."""
+    # 1. Admin login
+    res_admin = client.post("/api/v1/auth/login", json={"username": "admin", "password": "AdminPass2026!"})
+    assert res_admin.status_code == status.HTTP_200_OK
+    data_admin = res_admin.json()
+    assert data_admin["role"] == "ADMIN"
+    assert "access_token" in data_admin
+
+    # 2. Internal Analyst login
+    res_int = client.post("/api/v1/auth/login", json={"username": "internal_analyst", "password": "InternalPass2026!"})
+    assert res_int.status_code == status.HTTP_200_OK
+    assert res_int.json()["role"] == "INTERNAL_USER"
+
+    # 3. Public Guest login
+    res_pub = client.post("/api/v1/auth/login", json={"username": "public_guest", "password": "GuestPass2026!"})
+    assert res_pub.status_code == status.HTTP_200_OK
+    assert res_pub.json()["role"] == "PUBLIC_USER"
+
+def test_server_login_wrong_password_denied():
+    """Verify that invalid credentials fail with 401 Unauthorized."""
+    res = client.post("/api/v1/auth/login", json={"username": "admin", "password": "IncorrectPassword!"})
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_fail_closed_when_jwt_secret_missing():
+    """Verify that get_signing_secret fails closed with RuntimeError when secret is absent in authenticated mode."""
+    from backend.app.security.auth import get_signing_secret
+    from backend.app.core.config import settings
+
+    orig_secret = settings.JWT_SECRET_KEY
+    orig_env = os.environ.get("JWT_SECRET_KEY")
+    try:
+        settings.JWT_SECRET_KEY = None
+        if "JWT_SECRET_KEY" in os.environ:
+            del os.environ["JWT_SECRET_KEY"]
+
+        with pytest.raises(RuntimeError) as exc_info:
+            get_signing_secret()
+        assert "FAILING CLOSED" in str(exc_info.value).upper()
+    finally:
+        settings.JWT_SECRET_KEY = orig_secret
+        if orig_env:
+            os.environ["JWT_SECRET_KEY"] = orig_env
+
+def test_auth_me_endpoint():
+    """Verify that GET /api/v1/auth/me returns the verified caller identity."""
+    token = create_token("INTERNAL_USER")
+    res = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == status.HTTP_200_OK
+    assert res.json()["role"] == "INTERNAL_USER"
+
+def test_expired_token_denied():
+    """Verify that an expired JWT token is rejected with 401 Unauthorized."""
+    secret = os.getenv("JWT_SECRET_KEY", "knowvia-local-dev-secret-key-change-in-production-123456")
+    algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    now = datetime.now(timezone.utc)
+    expired_payload = {
+        "sub": "expired_user",
+        "role": "ADMIN",
+        "exp": now - timedelta(minutes=5),
+        "iat": now - timedelta(minutes=65),
+    }
+    expired_token = jwt.encode(expired_payload, secret, algorithm=algorithm)
+    res = client.get("/api/v1/documents/list", headers={"Authorization": f"Bearer {expired_token}"})
+    assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+def test_public_token_cannot_retrieve_internal_or_admin_dense_and_bm25():
+    """
+    Proves that PUBLIC_USER cannot retrieve INTERNAL or ADMIN chunks via BOTH
+    dense (Qdrant) and sparse (BM25) retrieval, even when submitting forged user_role='ADMIN'.
+    """
+    from backend.app.retrieval.vector_store import QdrantVectorStore
+    from backend.app.retrieval.dense import DenseRetriever
+    from backend.app.retrieval.bm25 import BM25Retriever
+    from backend.app.retrieval.hybrid import HybridRetriever
+    from backend.app.embeddings.service import get_embedding_service
+    from backend.app.generation.intent_router import QueryIntent, RouterResult
+    from backend.app.generation.llm import MockOfflineLLMClient
+    from backend.app.generation.service import GenerationService
+
+    from backend.app.ingestion.chunker import Chunk
+    embedder = get_embedding_service()
+    vector_store = QdrantVectorStore(location=":memory:", collection_name="test_rbac_isolation")
+    bm25 = BM25Retriever()
+
+    c1 = Chunk("pub_1", "Kubernetes Pods are the smallest deployable units of computing.", "Public Guide")
+    c2 = Chunk("int_1", "INTERNAL SECRET: Production database master password rotation occurs every 30 days.", "Internal Security Policy")
+    c3 = Chunk("adm_1", "ADMIN ONLY: Root SSH recovery key fingerprint for etcd cluster.", "Admin Root Runbook")
+
+    v1 = embedder.embed_text(c1.text)
+    v2 = embedder.embed_text(c2.text)
+    v3 = embedder.embed_text(c3.text)
+
+    m1 = {"document_id": "doc_pub", "document_name": "Public Guide", "access_level": "PUBLIC_USER", "status": "active", "document_type": "technical_documentation"}
+    m2 = {"document_id": "doc_int", "document_name": "Internal Security Policy", "access_level": "INTERNAL_USER", "status": "active", "document_type": "policy"}
+    m3 = {"document_id": "doc_adm", "document_name": "Admin Root Runbook", "access_level": "ADMIN", "status": "active", "document_type": "runbook"}
+
+    vector_store.add_chunks([c1, c2, c3], [v1, v2, v3], [m1, m2, m3])
+    bm25.index_chunks([c1, c2, c3], [m1, m2, m3])
+
+    dense = DenseRetriever(vector_store=vector_store, embedding_service=embedder)
+    hybrid = HybridRetriever(dense_retriever=dense, bm25_retriever=bm25)
+
+    class DeterministicKnowledgeRouter:
+        def route(self, query, chat_history=None, usage_callback=None):
+            return RouterResult(intent=QueryIntent.KNOWLEDGE, search_query=query)
+
+    class PassthroughReranker:
+        def rerank(self, query, candidates, top_n=5):
+            return candidates[:top_n]
+
+    # 1. Direct Dense & BM25 check for PUBLIC_USER
+    dense_pub = dense.retrieve("password rotation root SSH recovery key", user_role="PUBLIC_USER", top_k=5)
+    bm25_pub = bm25.retrieve("password rotation root SSH recovery key", user_role="PUBLIC_USER", top_k=5)
+    assert all(r.get("access_level") in ("PUBLIC_USER", "public") for r in dense_pub)
+    assert all(r.get("access_level") in ("PUBLIC_USER", "public") for r in bm25_pub)
+    assert not any(r.get("chunk_id") in ("int_1", "adm_1") for r in dense_pub)
+    assert not any(r.get("chunk_id") in ("int_1", "adm_1") for r in bm25_pub)
+
+    # 2. Verify INTERNAL_USER can see internal, but not ADMIN
+    dense_int = dense.retrieve("password rotation root SSH recovery key", user_role="INTERNAL_USER", top_k=5)
+    bm25_int = bm25.retrieve("password rotation root SSH recovery key", user_role="INTERNAL_USER", top_k=5)
+    assert any(r.get("chunk_id") == "int_1" for r in dense_int)
+    assert any(r.get("chunk_id") == "int_1" for r in bm25_int)
+    assert not any(r.get("chunk_id") == "adm_1" for r in dense_int)
+    assert not any(r.get("chunk_id") == "adm_1" for r in bm25_int)
+
+    # 3. End-to-end /api/v1/query with PUBLIC_USER token + forged user_role="ADMIN" in body
+    pub_token = create_token("PUBLIC_USER")
+    with (
+        patch("backend.app.api.routes_query.get_hybrid_retriever", return_value=hybrid),
+        patch("backend.app.api.routes_query.get_intent_router", return_value=DeterministicKnowledgeRouter()),
+        patch("backend.app.api.routes_query.get_reranker", return_value=PassthroughReranker()),
+        patch(
+            "backend.app.api.routes_query.get_generation_service",
+            return_value=GenerationService(llm_client=MockOfflineLLMClient()),
+        ),
+    ):
+        res = client.post(
+            "/api/v1/query",
+            json={"query": "What is the password rotation and root SSH recovery key?", "user_role": "ADMIN"},
+            headers={"Authorization": f"Bearer {pub_token}"}
+        )
+    assert res.status_code == status.HTTP_200_OK
+    body = res.json()
+    assert "INTERNAL SECRET" not in body["answer"]
+    assert "ADMIN ONLY" not in body["answer"]
+    for cit in body.get("citations", []):
+        assert cit.get("access_level") in ("PUBLIC_USER", "public")

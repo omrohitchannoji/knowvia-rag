@@ -174,3 +174,90 @@ This document should be rolled back if indexing fails.
     finally:
         if os.path.exists(path):
             os.remove(path)
+
+def test_in_memory_state_rolled_back_on_partial_failure(lifecycle_service):
+    """Verify that in-memory chunks and metadata rollback to pre-failure state on BM25 error."""
+    # First ingest a valid document
+    valid_content = """---
+document_id: doc_pre_existing
+document_name: pre_existing.md
+access_level: PUBLIC_USER
+version: v1.0
+---
+
+# Pre-existing Document
+This document is already indexed and should survive the partial failure of a subsequent file.
+"""
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(valid_content)
+        v_path = f.name
+
+    try:
+        lifecycle_service.ingest_file(v_path)
+        baseline_chunks_count = len(lifecycle_service.all_chunks)
+        assert baseline_chunks_count > 0
+
+        # Now mock BM25 index_chunks failure for next file
+        real_bm25 = lifecycle_service.bm25_retriever
+        mock_bm25 = MagicMock()
+        mock_bm25.index_chunks.side_effect = RuntimeError("Partial failure during BM25 update")
+        lifecycle_service.bm25_retriever = mock_bm25
+
+        fail_content = """---
+document_id: doc_should_abort
+document_name: abort.md
+access_level: PUBLIC_USER
+version: v1.0
+---
+
+# Abort Doc
+Should never remain in memory.
+"""
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".md", delete=False, encoding="utf-8") as ff:
+            ff.write(fail_content)
+            fail_path = ff.name
+
+        try:
+            with pytest.raises(RuntimeError):
+                lifecycle_service.ingest_file(fail_path)
+
+            # In-memory chunks must be strictly rolled back to baseline
+            assert len(lifecycle_service.all_chunks) == baseline_chunks_count
+            assert not any(m.get("document_id") == "doc_should_abort" for m in lifecycle_service.all_metadata)
+        finally:
+            if os.path.exists(fail_path):
+                os.remove(fail_path)
+    finally:
+        if os.path.exists(v_path):
+            os.remove(v_path)
+
+def test_delete_all_documents_clears_bm25_index_completely(lifecycle_service):
+    """Verify that deleting all documents clears bm25_index to None without stale state."""
+    content = """---
+document_id: doc_solo
+document_name: solo.md
+access_level: PUBLIC_USER
+version: v1.0
+---
+
+# Solo Doc
+Single document in collection.
+"""
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(content)
+        path = f.name
+
+    try:
+        lifecycle_service.ingest_file(path)
+        assert len(lifecycle_service.all_chunks) > 0
+        assert lifecycle_service.bm25_retriever.bm25_index is not None
+
+        # Delete sole document
+        res = lifecycle_service.delete_document("doc_solo")
+        assert res is True
+        assert len(lifecycle_service.all_chunks) == 0
+        assert lifecycle_service.bm25_retriever.bm25_index is None
+        assert lifecycle_service.bm25_retriever.retrieve("Solo", user_role="PUBLIC_USER") == []
+    finally:
+        if os.path.exists(path):
+            os.remove(path)

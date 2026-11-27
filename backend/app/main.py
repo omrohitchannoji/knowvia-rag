@@ -19,6 +19,7 @@ from backend.app.core.logging import logger
 from backend.app.api.routes_health import router as health_router
 from backend.app.api.routes_documents import router as documents_router
 from backend.app.api.routes_query import router as query_router
+from backend.app.api.routes_auth import router as auth_router
 
 from backend.app.services.document_service import get_document_service
 
@@ -72,6 +73,7 @@ def create_application() -> FastAPI:
 
     # Include Routes under /api/v1
     app.include_router(health_router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1")
     app.include_router(documents_router, prefix="/api/v1")
     app.include_router(query_router, prefix="/api/v1")
 

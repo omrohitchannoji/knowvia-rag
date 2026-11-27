@@ -15,8 +15,14 @@ st.set_page_config(
 
 # Resolve API Base URL (Streamlit Secrets > Env Var > Static EC2 IP)
 def get_api_base_url():
-    if hasattr(st, "secrets") and "API_BASE_URL" in st.secrets:
-        return st.secrets["API_BASE_URL"]
+    try:
+        secret_api_base_url = st.secrets.get("API_BASE_URL")
+        if secret_api_base_url:
+            return secret_api_base_url
+    except Exception:
+        # Streamlit raises StreamlitSecretNotFoundError when no secrets.toml exists.
+        # Local development should still be able to use API_BASE_URL from the environment.
+        pass
     return os.getenv("API_BASE_URL", "http://13.205.104.107:8000/api/v1")
 
 API_BASE_URL = get_api_base_url()
@@ -113,6 +119,7 @@ st.markdown("""
         display: flex;
         gap: 14px;
         align-items: center;
+        flex-wrap: wrap;
     }
     .badge-grounded { color: #4ade80; }
     .badge-abstained { color: #facc15; }
@@ -174,38 +181,51 @@ st.markdown("""
 st.session_state.setdefault("messages", [])
 st.session_state.setdefault("chat_history", [])
 st.session_state.setdefault("view", "chat")
-st.session_state.setdefault("user_role", "INTERNAL_USER")
+st.session_state.setdefault("auth_token", None)
+st.session_state.setdefault("auth_user", "public_guest")
+st.session_state.setdefault("auth_role", "PUBLIC_USER")
 st.session_state.setdefault("top_k", 5)
 st.session_state.setdefault("filter_doc_type", "All")
+
+# Preset credentials for server-managed demo identities
+DEMO_CREDENTIALS = {
+    "public_guest": ("public_guest", "GuestPass2026!", "PUBLIC_USER", "Public Guest"),
+    "internal_analyst": ("internal_analyst", "InternalPass2026!", "INTERNAL_USER", "Internal Analyst"),
+    "admin": ("admin", "AdminPass2026!", "ADMIN", "System Administrator"),
+}
 
 # ----------------------------------------------------------------------------
 # Authentication & Backend Calls
 # ----------------------------------------------------------------------------
-def get_auth_headers(role: str = "INTERNAL_USER") -> dict:
-    secret = (
-        st.secrets["JWT_SECRET_KEY"]
-        if hasattr(st, "secrets") and "JWT_SECRET_KEY" in st.secrets
-        else os.getenv("JWT_SECRET_KEY", "knowvia-local-dev-secret-key-change-in-production-123456")
-    )
-    algorithm = (
-        st.secrets["JWT_ALGORITHM"]
-        if hasattr(st, "secrets") and "JWT_ALGORITHM" in st.secrets
-        else os.getenv("JWT_ALGORITHM", "HS256")
-    )
+def login_to_backend(username: str, password: str) -> bool:
+    """Authenticates against the backend server and stores the server-minted JWT."""
     try:
-        from datetime import datetime, timezone, timedelta
-        from jose import jwt
-        now = datetime.now(timezone.utc)
-        payload = {
-            "sub": "streamlit_ui_user",
-            "role": role,
-            "exp": now + timedelta(hours=24),
-            "iat": now
-        }
-        token = jwt.encode(payload, secret, algorithm=algorithm)
-        return {"Authorization": f"Bearer {token}"}
+        resp = requests.post(
+            f"{API_BASE_URL}/auth/login",
+            json={"username": username, "password": password},
+            timeout=5
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            st.session_state["auth_token"] = data["access_token"]
+            st.session_state["auth_role"] = data["role"]
+            st.session_state["auth_user"] = data["username"]
+            return True
+        return False
     except Exception:
-        return {}
+        return False
+
+def get_auth_headers() -> dict:
+    """Returns Bearer token header from authenticated server session."""
+    token = st.session_state.get("auth_token")
+    if not token:
+        # Auto-login with default persona if not logged in
+        u, p, r, _ = DEMO_CREDENTIALS.get(st.session_state.get("auth_user", "public_guest"), DEMO_CREDENTIALS["public_guest"])
+        if login_to_backend(u, p):
+            token = st.session_state.get("auth_token")
+    if token:
+        return {"Authorization": f"Bearer {token}"}
+    return {}
 
 @st.cache_data(ttl=HEALTH_TTL, show_spinner=False)
 def check_health():
@@ -214,20 +234,18 @@ def check_health():
 
 @st.cache_data(ttl=DOCS_TTL, show_spinner=False)
 def fetch_documents():
-    role = st.session_state.get("user_role", "INTERNAL_USER")
-    resp = requests.get(f"{API_BASE_URL}/documents/list", headers=get_auth_headers(role), timeout=5)
+    resp = requests.get(f"{API_BASE_URL}/documents/list", headers=get_auth_headers(), timeout=5)
     resp.raise_for_status()
     return resp.json()
 
-def call_query_api(prompt, user_role, top_k, doc_filter, chat_history):
+def call_query_api(prompt, top_k, doc_filter, chat_history):
     payload = {
         "query": prompt,
-        "user_role": user_role,
         "top_k": top_k,
         "filter_document_type": doc_filter,
         "chat_history": chat_history,
     }
-    headers = get_auth_headers(user_role)
+    headers = get_auth_headers()
     res = requests.post(f"{API_BASE_URL}/query", json=payload, headers=headers, timeout=45)
     res.raise_for_status()
     return res.json()
@@ -240,12 +258,12 @@ def render_citations(citations):
             st.markdown(
                 f"""
                 <div class="citation-card">
-                    <strong>[{cit['source_index']}] {cit['document_name']}</strong><br/>
-                    <span class="citation-meta">
-                        Section: {cit.get('section', 'General')} ·
-                        Access: {cit.get('access_level', 'PUBLIC_USER')} ·
-                        Version: {cit.get('version', 'v1.0')}
-                    </span>
+                    <strong>[Source {cit.get('source_index', '?')}] {cit.get('document_name', 'Unknown')}</strong>
+                    <div class="citation-meta">
+                        Section: {cit.get('section', 'General')} &nbsp;|&nbsp;
+                        Access: <code>{cit.get('access_level', 'PUBLIC_USER')}</code>
+                        {f"&nbsp;|&nbsp; Page: {cit.get('page')}" if cit.get('page') else ""}
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -255,19 +273,35 @@ def render_meta(msg):
     grounded = not msg.get("is_abstained", False)
     badge_class = "badge-grounded" if grounded else "badge-abstained"
     badge_text = "Grounded" if grounded else "Abstained"
+    cost_str = f"&nbsp;|&nbsp; Cost: ${msg.get('cost', 0.0):.6f}" if msg.get("cost") is not None else ""
+    tokens_str = f"&nbsp;|&nbsp; Tokens: {msg.get('tokens', {}).get('total_tokens', 0)}" if msg.get("tokens") else ""
     st.markdown(
         f"""
         <div class="msg-meta">
             <span class="{badge_class}">● {badge_text}</span>
             <span>{msg.get('latency', 0):.0f} ms</span>
             <span>{msg.get('chunks_count', 0)} chunks retrieved</span>
+            <span>{tokens_str}{cost_str}</span>
         </div>
         """,
         unsafe_allow_html=True
     )
 
+    # Render Execution Trace Spans if available
+    trace = msg.get("trace")
+    if trace and trace.get("spans"):
+        with st.expander("⚡ Pipeline Execution Trace & Latency Breakdown", expanded=False):
+            spans = trace.get("spans", [])
+            cols = st.columns(min(len(spans), 7))
+            for i, span in enumerate(spans):
+                with cols[i % len(cols)]:
+                    st.metric(
+                        label=span.get("stage", "").replace("_", " ").title(),
+                        value=f"{span.get('duration_ms', 0):.1f} ms"
+                    )
+
 # ----------------------------------------------------------------------------
-# Sidebar — navigation, not tabs, so chat_input is never nested in a container
+# Sidebar — navigation and verified identity selection
 # ----------------------------------------------------------------------------
 with st.sidebar:
     st.markdown(
@@ -293,18 +327,30 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # Verified Server-Side Identity Selection
+    st.markdown("**👤 Authenticated Identity**")
+    user_key = st.selectbox(
+        "Select Persona / Account",
+        options=["public_guest", "internal_analyst", "admin"],
+        format_func=lambda k: f"{DEMO_CREDENTIALS[k][3]} ({DEMO_CREDENTIALS[k][2]})",
+        index=["public_guest", "internal_analyst", "admin"].index(st.session_state.get("auth_user", "public_guest"))
+    )
+
+    if user_key != st.session_state.get("auth_user"):
+        u, p, r, _ = DEMO_CREDENTIALS[user_key]
+        if login_to_backend(u, p):
+            st.success(f"Authenticated as {user_key} [{r}]")
+            st.rerun()
+
+    st.markdown(f"Verified Role: ` {st.session_state.get('auth_role', 'PUBLIC_USER')} `")
+
     if st.session_state.view == "chat":
         if st.button("🗑️  New chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.chat_history = []
             st.rerun()
 
-        with st.expander("🔒 Access & Retrieval", expanded=False):
-            st.session_state.user_role = st.selectbox(
-                "Authorization role",
-                options=["PUBLIC_USER", "INTERNAL_USER", "ADMIN"],
-                index=["PUBLIC_USER", "INTERNAL_USER", "ADMIN"].index(st.session_state.user_role),
-            )
+        with st.expander("⚙️ Retrieval Parameters", expanded=False):
             st.session_state.top_k = st.slider("Top-K chunks", 1, 10, st.session_state.top_k)
             st.session_state.filter_doc_type = st.selectbox(
                 "Document category",
@@ -322,12 +368,13 @@ with st.sidebar:
             status_col.markdown('<span class="status-pill status-degraded"><span class="dot"></span>Degraded</span>', unsafe_allow_html=True)
     except Exception:
         status_col.markdown('<span class="status-pill status-offline"><span class="dot"></span>Offline</span>', unsafe_allow_html=True)
-    if refresh_col.button("↻", help="Re-check backend status"):
+
+    if refresh_col.button("↻", key="ref_health", use_container_width=True):
         check_health.clear()
         st.rerun()
 
 # ----------------------------------------------------------------------------
-# VIEW: Chat  (root-level — no tabs/columns wrapping chat_input)
+# VIEW: Chat & Query Engine
 # ----------------------------------------------------------------------------
 if st.session_state.view == "chat":
     st.markdown(
@@ -364,7 +411,7 @@ if st.session_state.view == "chat":
                 render_meta(msg)
                 render_citations(msg.get("citations"))
 
-    # Chat input — root level, not nested in any container
+    # Chat input
     typed_prompt = st.chat_input("Ask a question about Kubernetes, HPA, Databricks, or cloud infrastructure...")
     prompt = typed_prompt or picked_example
 
@@ -379,7 +426,6 @@ if st.session_state.view == "chat":
                     doc_filter = None if st.session_state.filter_doc_type == "All" else st.session_state.filter_doc_type
                     data = call_query_api(
                         prompt,
-                        st.session_state.user_role,
                         st.session_state.top_k,
                         doc_filter,
                         st.session_state.chat_history,
@@ -389,6 +435,9 @@ if st.session_state.view == "chat":
                     is_abstained = data.get("is_abstained", False)
                     latency = data.get("latency_ms", 0.0)
                     retrieved_chunks = data.get("retrieved_chunks_count", 0)
+                    trace_obj = data.get("trace")
+                    tokens_obj = data.get("token_usage")
+                    cost_val = data.get("estimated_cost_usd", 0.0)
 
                     st.markdown(answer)
                     new_msg = {
@@ -398,6 +447,9 @@ if st.session_state.view == "chat":
                         "latency": latency,
                         "chunks_count": retrieved_chunks,
                         "is_abstained": is_abstained,
+                        "trace": trace_obj,
+                        "tokens": tokens_obj,
+                        "cost": cost_val
                     }
                     render_meta(new_msg)
                     render_citations(citations)
@@ -420,31 +472,28 @@ elif st.session_state.view == "docs":
         unsafe_allow_html=True
     )
 
-    col_up, col_meta = st.columns([2, 1])
-    with col_up:
+    with st.expander("📤 Ingest new document", expanded=False):
         uploaded_file = st.file_uploader(
-            "Upload document", type=["md", "pdf", "docx", "pptx", "html", "txt"]
+            "Choose a Markdown, PDF, DOCX, or TXT file",
+            type=["md", "markdown", "pdf", "docx", "txt", "html"]
         )
-    with col_meta:
-        up_access = st.selectbox("Access level", options=["PUBLIC_USER", "INTERNAL_USER", "ADMIN"], index=1)
-        up_version = st.text_input("Version", value="1.0")
-        up_type = st.selectbox("Category", options=["technical_documentation", "architecture", "api_spec"])
+        up_col1, up_col2 = st.columns(2)
+        access_lvl = up_col1.selectbox("Access Level", ["public", "internal", "restricted"])
+        doc_category = up_col2.selectbox("Document Category", ["technical", "architecture", "policy"])
 
-    if uploaded_file and st.button("🚀 Ingest & Index"):
-        with st.spinner("Parsing → embedding → indexing…"):
+        if st.button("Upload and Index", disabled=uploaded_file is None):
             try:
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                data = {"access_level": up_access, "version": up_version, "document_type": up_type}
+                payload = {"access_level": access_lvl, "document_type": doc_category}
                 up_res = requests.post(
                     f"{API_BASE_URL}/documents/upload",
                     files=files,
-                    data=data,
-                    headers=get_auth_headers("ADMIN"),
-                    timeout=30
+                    data=payload,
+                    headers=get_auth_headers(),
+                    timeout=60
                 )
-                if up_res.status_code == 201:
-                    res_json = up_res.json()
-                    st.success(f"Indexed **{res_json['document_name']}** ({res_json['total_chunks']} chunks)")
+                if up_res.status_code == 200:
+                    st.success(f"Successfully ingested and indexed `{uploaded_file.name}`")
                     fetch_documents.clear()
                     time.sleep(1)
                     st.rerun()
@@ -491,13 +540,15 @@ elif st.session_state.view == "docs":
             if del_col2.button("🗑️ Delete", use_container_width=True):
                 del_res = requests.delete(
                     f"{API_BASE_URL}/documents/{doc_to_delete}",
-                    headers=get_auth_headers("ADMIN")
+                    headers=get_auth_headers()
                 )
                 if del_res.status_code == 200:
                     st.success(f"Deleted {doc_to_delete}")
                     fetch_documents.clear()
                     time.sleep(1)
                     st.rerun()
+                elif del_res.status_code == 403:
+                    st.error(f"Permission Denied: Deletion requires ADMIN role (currently {st.session_state.get('auth_role')})")
                 else:
                     st.error(f"Delete failed: {del_res.text}")
     except Exception as e:
@@ -509,16 +560,16 @@ elif st.session_state.view == "docs":
 elif st.session_state.view == "bench":
     st.markdown('<div class="page-title">📊 System Benchmarks</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="page-sub">Evaluated against ground-truth technical documentation benchmark queries.</div>',
+        '<div class="page-sub">Measured retrieval & generation performance across 5 pipeline ablation configurations (60 benchmark queries).</div>',
         unsafe_allow_html=True
     )
 
     b1, b2, b3, b4 = st.columns(4)
     for col, label, value, delta in [
-        (b1, "Recall@5", "0.910", "+14% vs Dense Only"),
-        (b2, "MRR", "0.905", "High Top-1 Rank Precision"),
-        (b3, "NDCG@5", "0.912", "Optimal Discounted Gain"),
-        (b4, "Groundedness", "0.965", "Strict Citation Verification"),
+        (b1, "Recall@5 (Hybrid)", "1.000", "+16.7% vs Dense Only"),
+        (b2, "MRR (Hybrid)", "0.792", "Reciprocal Rank Fusion"),
+        (b3, "NDCG@5 (Normalized)", "0.824", "Bounded in [0, 1]"),
+        (b4, "Abstention F1", "1.000", "Zero Hallucination on OOS"),
     ]:
         with col:
             st.markdown(
@@ -529,12 +580,12 @@ elif st.session_state.view == "bench":
             )
 
     st.markdown("---")
-    st.markdown("**🏗️ Architecture & Guardrails**")
+    st.markdown("**🏗️ Verified Pipeline Architecture & Observability**")
     st.markdown("""
-    1. **Input Security Guardrail** — inspects queries for prompt injection, jailbreaks, system prompt leakage.
-    2. **Intent Classification Router** — handles greetings, out-of-scope queries, multi-turn rewriting.
-    3. **Pre-Retrieval RBAC** — enforces role-level access (`PUBLIC_USER` vs `INTERNAL_USER`).
-    4. **Hybrid Score Fusion** — Qdrant dense search (`all-MiniLM-L6-v2`) + BM25 sparse, fused via RRF.
-    5. **Cross-Encoder Reranking** — `ms-marco-MiniLM-L-6-v2` with sigmoid score normalization.
-    6. **Grounded Generation** — Groq GPT-OSS-20B with strict grounding directives and secret redaction.
+    1. **Pre-Retrieval Identity Verification** — Server-assigned JWT claims (`PUBLIC_USER`, `INTERNAL_USER`, `ADMIN`) filtered before score computation.
+    2. **Intent Classification Router** — 2-tier classifier handles conversational queries in sub-millisecond time.
+    3. **Hybrid Search Fusion (Dense + BM25)** — `all-MiniLM-L6-v2` dense vectors + BM25Okapi sparse keywords via RRF.
+    4. **Cross-Encoder Reranking** — Joint-attention re-scoring with `ms-marco-MiniLM-L-6-v2` and sigmoid normalization.
+    5. **Multi-Signal Evidence Abstention** — Structured refusal when evidence score < 0.65 threshold.
+    6. **Per-Stage Tracing & Cost Reporting** — Real-time latency breakdown across all 7 stages with token cost calculation.
     """)

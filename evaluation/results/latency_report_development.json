@@ -1,0 +1,60 @@
+{
+  "split": "development",
+  "total_queries": 30,
+  "langfuse_mode": "offline_mock",
+  "stages": {
+    "guardrail": {
+      "samples": 30,
+      "p50_ms": 0.03,
+      "p95_ms": 0.05,
+      "mean_ms": 0.17
+    },
+    "router": {
+      "samples": 30,
+      "p50_ms": 33.64,
+      "p95_ms": 83.91,
+      "mean_ms": 41.1
+    },
+    "dense_retrieval": {
+      "samples": 26,
+      "p50_ms": 564.4,
+      "p95_ms": 1275.54,
+      "mean_ms": 688.16
+    },
+    "bm25_retrieval": {
+      "samples": 26,
+      "p50_ms": 41.04,
+      "p95_ms": 52.86,
+      "mean_ms": 39.64
+    },
+    "fusion": {
+      "samples": 26,
+      "p50_ms": 0.43,
+      "p95_ms": 0.69,
+      "mean_ms": 0.41
+    },
+    "reranking": {
+      "samples": 26,
+      "p50_ms": 1709.1,
+      "p95_ms": 1824.76,
+      "mean_ms": 1646.89
+    },
+    "generation": {
+      "samples": 26,
+      "p50_ms": 32.93,
+      "p95_ms": 42.97,
+      "mean_ms": 24.65
+    },
+    "total": {
+      "samples": 30,
+      "p50_ms": 2397.96,
+      "p95_ms": 3044.89,
+      "mean_ms": 2121.76
+    }
+  },
+  "tokens_available_count": 0,
+  "tokens_unavailable_count": 30,
+  "avg_tokens_per_query": null,
+  "cost_available_count": 0,
+  "cost_unavailable_count": 30
+}

@@ -25,15 +25,18 @@ class HybridRetriever:
         user_role: str = "PUBLIC_USER",
         top_k: Optional[int] = None,
         filter_status: Optional[str] = "active",
-        filter_document_type: Optional[str] = None
+        filter_document_type: Optional[str] = None,
+        tracer: Optional[Any] = None
     ) -> List[Dict[str, Any]]:
         """
         Executes Hybrid Retrieval combining Dense Vector Search and Sparse BM25 Search.
         Applies Reciprocal Rank Fusion (RRF) to produce unified, deduplicated candidates.
         """
+        import time
         k_candidate = (top_k or settings.TOP_K_DENSE) * 2
 
         # 1. Retrieve Candidate Lists from Dense and BM25 Retrievers
+        t_dense = time.perf_counter()
         dense_results = self.dense_retriever.retrieve(
             query=query,
             user_role=user_role,
@@ -41,7 +44,10 @@ class HybridRetriever:
             filter_status=filter_status,
             filter_document_type=filter_document_type
         )
+        if tracer and hasattr(tracer, "record_span"):
+            tracer.record_span("dense_retrieval", (time.perf_counter() - t_dense) * 1000, details={"candidates_retrieved": len(dense_results) if isinstance(dense_results, list) else 0, "top_k": k_candidate})
 
+        t_bm25 = time.perf_counter()
         bm25_results = self.bm25_retriever.retrieve(
             query=query,
             user_role=user_role,
@@ -49,14 +55,20 @@ class HybridRetriever:
             filter_status=filter_status,
             filter_document_type=filter_document_type
         )
+        if tracer and hasattr(tracer, "record_span"):
+            tracer.record_span("bm25_retrieval", (time.perf_counter() - t_bm25) * 1000, details={"candidates_retrieved": len(bm25_results) if isinstance(bm25_results, list) else 0, "top_k": k_candidate})
 
         logger.info(f"Hybrid Retrieval for query '{query}': Dense candidates={len(dense_results)}, BM25 candidates={len(bm25_results)}")
 
         # 2. Fuse Scores
+        t_fusion = time.perf_counter()
         if self.fusion_method == "rrf":
             fused_candidates = self._reciprocal_rank_fusion(dense_results, bm25_results)
         else:
             fused_candidates = self._weighted_score_fusion(dense_results, bm25_results)
+
+        if tracer and hasattr(tracer, "record_span"):
+            tracer.record_span("fusion", (time.perf_counter() - t_fusion) * 1000, details={"method": str(self.fusion_method), "fused_candidates": len(fused_candidates) if isinstance(fused_candidates, list) else 0})
 
         final_k = top_k or settings.TOP_K_DENSE
         return fused_candidates[:final_k]

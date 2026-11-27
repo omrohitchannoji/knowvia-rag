@@ -1,0 +1,2029 @@
+{
+  "summary": {
+    "dataset_version": "2.0-sixty-cases",
+    "split": "held_out_test",
+    "total_cases": 30,
+    "router_accuracy": 0.7667,
+    "evaluation_timestamp": "2026-11-27T10:19:40.882163+00:00",
+    "command": "evaluation/run_eval.py --split held_out_test --mode all",
+    "modes": {
+      "Dense Only": {
+        "recall_5": 0.9,
+        "mrr": 0.8611,
+        "ndcg_5": 0.871,
+        "faithfulness": 0.3917,
+        "relevance": 0.3917,
+        "citation_correctness": 0.3,
+        "abstention_metrics": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 0.0,
+          "abstention_f1": 0.0,
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 6,
+          "true_negatives": 24
+        },
+        "latency_percentiles": {
+          "p50_ms": 299.58,
+          "p95_ms": 533.34,
+          "mean_ms": 259.81
+        }
+      },
+      "BM25 Only": {
+        "recall_5": 0.9667,
+        "mrr": 0.85,
+        "ndcg_5": 0.8798,
+        "faithfulness": 0.3611,
+        "relevance": 0.3611,
+        "citation_correctness": 0.3,
+        "abstention_metrics": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 0.0,
+          "abstention_f1": 0.0,
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 6,
+          "true_negatives": 24
+        },
+        "latency_percentiles": {
+          "p50_ms": 48.9,
+          "p95_ms": 77.67,
+          "mean_ms": 50.22
+        }
+      },
+      "Hybrid (RRF)": {
+        "recall_5": 0.9667,
+        "mrr": 0.825,
+        "ndcg_5": 0.8616,
+        "faithfulness": 0.3889,
+        "relevance": 0.3889,
+        "citation_correctness": 0.3,
+        "abstention_metrics": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 0.0,
+          "abstention_f1": 0.0,
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 6,
+          "true_negatives": 24
+        },
+        "latency_percentiles": {
+          "p50_ms": 313.75,
+          "p95_ms": 394.24,
+          "mean_ms": 251.29
+        }
+      },
+      "Hybrid + Reranker": {
+        "recall_5": 0.9667,
+        "mrr": 0.9,
+        "ndcg_5": 0.9175,
+        "faithfulness": 0.3889,
+        "relevance": 0.3889,
+        "citation_correctness": 0.3,
+        "abstention_metrics": {
+          "abstention_precision": 1.0,
+          "abstention_recall": 0.0,
+          "abstention_f1": 0.0,
+          "true_positives": 0,
+          "false_positives": 0,
+          "false_negatives": 6,
+          "true_negatives": 24
+        },
+        "latency_percentiles": {
+          "p50_ms": 704.1,
+          "p95_ms": 937.6,
+          "mean_ms": 555.97
+        }
+      },
+      "Hybrid + Reranker + Abstention": {
+        "recall_5": 0.9667,
+        "mrr": 0.9,
+        "ndcg_5": 0.9175,
+        "faithfulness": 0.4139,
+        "relevance": 0.4139,
+        "citation_correctness": 0.3333,
+        "abstention_metrics": {
+          "abstention_precision": 0.1429,
+          "abstention_recall": 0.1667,
+          "abstention_f1": 0.1538,
+          "true_positives": 1,
+          "false_positives": 6,
+          "false_negatives": 5,
+          "true_negatives": 18
+        },
+        "latency_percentiles": {
+          "p50_ms": 690.47,
+          "p95_ms": 922.26,
+          "mean_ms": 547.83
+        }
+      }
+    }
+  },
+  "per_query_evaluations": [
+    {
+      "id": "eval_test_001",
+      "query": "What is the primary difference between a Kubernetes CronJob and a standard Job?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_cronjobs",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 906.89,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.75,
+            "relevance": 0.75,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.3333,
+          "ndcg_k": 0.5,
+          "latency_ms": 52.77,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.25,
+            "relevance": 0.25,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 324.97,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 1.0,
+            "relevance": 1.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 816.15,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.75,
+            "relevance": 0.75,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 817.05,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.75,
+            "relevance": 0.75,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_002",
+      "query": "How does a worker in parallel_work_queue notify the queue that work is done?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_parallel_work_queue",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 304.29,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 96.87,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 394.24,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 937.6,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 936.08,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_003",
+      "query": "What is successfulJobsHistoryLimit in a Kubernetes CronJob?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_cronjobs",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 298.9,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 57.55,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 325.95,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 745.81,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 746.68,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_004",
+      "query": "What is failedJobsHistoryLimit in a Kubernetes CronJob?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_cronjobs",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 533.34,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 50.44,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 343.38,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 810.64,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 807.26,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_005",
+      "query": "How does HPA calculate the desired number of replicas from current metrics?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_pods_autoscale",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 303.08,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 52.04,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.25,
+          "ndcg_k": 0.4307,
+          "latency_ms": 355.84,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 888.56,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 854.84,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_006",
+      "query": "What is the purpose of minReplicas and maxReplicas in HPA?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_pods_autoscale",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 300.39,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 53.1,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.25,
+            "relevance": 0.25,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 324.58,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 853.33,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.25,
+            "relevance": 0.25,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 820.68,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_007",
+      "query": "What restartPolicy values are valid for a Kubernetes Job Pod?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_monitor_job",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 0.3333,
+          "ndcg_k": 0.5,
+          "latency_ms": 297.61,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 46.23,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 308.11,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 635.49,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 636.69,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_008",
+      "query": "What does activeDeadlineSeconds do when assigned to a Kubernetes Job?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_monitor_job",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 303.04,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.3333,
+          "ndcg_k": 0.5,
+          "latency_ms": 74.97,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 380.3,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 586.08,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 587.03,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_009",
+      "query": "How do you trigger a Databricks job run immediately using the CLI?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_job_management",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 300.83,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 46.17,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 313.07,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 775.28,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 775.03,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_010",
+      "query": "What tools are recommended for CI/CD Databricks job management over raw CLI?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_job_management",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 298.05,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 48.9,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 322.87,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 849.87,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 849.79,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_011",
+      "query": "How do you initialize a FastAPI application instance in Python?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_fastapi_core",
+      "expected_intent": "knowledge",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 31.6,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_012",
+      "query": "Good morning! What topics can I query in this system?",
+      "category": "conversational",
+      "expected_document": null,
+      "expected_intent": "conversational",
+      "routed_intent": "conversational",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 36.08,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_013",
+      "query": "Thanks for the explanation!",
+      "category": "conversational",
+      "expected_document": null,
+      "expected_intent": "conversational",
+      "routed_intent": "conversational",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 36.46,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_014",
+      "query": "What is the capital city of France?",
+      "category": "out_of_scope",
+      "expected_document": null,
+      "expected_intent": "out_of_scope",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 39.64,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_015",
+      "query": "Can you recommend a good stock to buy on the NASDAQ today?",
+      "category": "out_of_scope",
+      "expected_document": null,
+      "expected_intent": "out_of_scope",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 38.48,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_016",
+      "query": "What is 5-level paging in modern CPU memory management?",
+      "category": "distractor_robustness",
+      "expected_document": "doc_5_level_paging_and_5_level_ept",
+      "expected_intent": "knowledge",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 38.07,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_017",
+      "query": "How do Job backoff limits and container restart policies interact during pod crashes?",
+      "category": "multi_hop",
+      "expected_document": "doc_monitor_job",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 336.29,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 47.94,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 317.66,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 689.98,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 685.74,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_018",
+      "query": "How does HPA scale Databricks task executors compared to Kubernetes worker pods?",
+      "category": "multi_hop",
+      "expected_document": "doc_pods_autoscale",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 299.58,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 77.67,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 356.67,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 893.23,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 892.94,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.5,
+            "relevance": 0.5,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_019",
+      "query": "Under NexaCloud Policy v2, what password complexity and MFA rules must be enforced?",
+      "category": "access_restricted",
+      "expected_document": "doc_nexacloud_sec_v2",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "INTERNAL_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 298.19,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 50.97,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 319.86,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 771.02,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 0.0,
+          "mrr": 0.0,
+          "ndcg_k": 0.0,
+          "latency_ms": 739.56,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_020",
+      "query": "Under NexaCloud Policy v2, what password complexity and MFA rules must be enforced?",
+      "category": "access_restricted",
+      "expected_document": null,
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 310.51,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 53.23,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 341.24,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 855.32,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 821.49,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 1.0,
+            "relevance": 1.0,
+            "citation_correctness": 1.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_021",
+      "query": "Which personnel have authorized access to production database systems at NexaCloud?",
+      "category": "access_restricted",
+      "expected_document": "doc_nexacloud_sec_v2",
+      "expected_intent": "knowledge",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": false,
+      "evaluation_role": "INTERNAL_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 33.66,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_022",
+      "query": "Which personnel have authorized access to production database systems at NexaCloud?",
+      "category": "access_restricted",
+      "expected_document": null,
+      "expected_intent": "knowledge",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 34.28,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_023",
+      "query": "What is the secret decryption key for the Kubernetes control plane etcd database?",
+      "category": "unanswerable",
+      "expected_document": null,
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 331.42,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 55.35,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 312.89,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 488.21,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 486.85,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_024",
+      "query": "How many interstellar probes did NASA launch to Alpha Centauri last month?",
+      "category": "unanswerable",
+      "expected_document": null,
+      "expected_intent": "knowledge",
+      "routed_intent": "conversational",
+      "intent_correct": false,
+      "should_abstain": true,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "conversational_bypass": {
+          "answer": "Hello! I am the Knowvia AI Technical Documentation & Policy Intelligence Assistant. I am designed to help you search, analyze, and understand technical documentation, security policies, disaster recovery targets (RPO/RTO), API specifications, and cloud infrastructure guidelines.",
+          "latency_ms": 33.08,
+          "is_abstained": false
+        }
+      }
+    },
+    {
+      "id": "eval_test_025",
+      "query": "What command verifies whether a Redis queue has remaining items in worker.py?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_parallel_work_queue",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 317.26,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 49.55,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 309.61,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 765.37,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 765.85,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_026",
+      "query": "What happens if concurrencyPolicy is set to Forbid on a Kubernetes CronJob?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_cronjobs",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 301.13,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 51.21,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 313.75,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 704.1,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 0.5,
+          "ndcg_k": 0.6309,
+          "latency_ms": 671.83,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_027",
+      "query": "What happens when concurrencyPolicy is set to Replace on a CronJob?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_cronjobs",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 296.39,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 0.3333,
+          "ndcg_k": 0.5,
+          "latency_ms": 68.23,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 330.05,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 861.92,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 817.47,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_028",
+      "query": "What is the role of stabilizationWindowSeconds in Kubernetes HPA?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_pods_autoscale",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 301.87,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 47.05,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 587.11,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 954.18,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 922.26,
+          "is_abstained": true,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 0.0
+          },
+          "answer_preview": "I am unable to answer based on the provided context."
+        }
+      }
+    },
+    {
+      "id": "eval_test_029",
+      "query": "What kubectl command outputs event history and conditions for a Kubernetes Job?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_monitor_job",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 300.61,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 47.83,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 311.76,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 689.2,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 690.47,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.3333,
+            "relevance": 0.3333,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    },
+    {
+      "id": "eval_test_030",
+      "query": "What is the purpose of the Databricks Python SDK compared to raw REST API calls?",
+      "category": "technical_knowledge",
+      "expected_document": "doc_job_management",
+      "expected_intent": "knowledge",
+      "routed_intent": "knowledge",
+      "intent_correct": true,
+      "should_abstain": false,
+      "evaluation_role": "PUBLIC_USER",
+      "mode_evaluations": {
+        "Dense Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 533.17,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "BM25 Only": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 57.18,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid (RRF)": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 323.55,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 786.39,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        },
+        "Hybrid + Reranker + Abstention": {
+          "recall_k": 1.0,
+          "mrr": 1.0,
+          "ndcg_k": 1.0,
+          "latency_ms": 787.87,
+          "is_abstained": false,
+          "generation_quality": {
+            "faithfulness": 0.0,
+            "relevance": 0.0,
+            "citation_correctness": 0.0,
+            "appropriate_abstention": 1.0
+          },
+          "answer_preview": "Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: Ge"
+        }
+      }
+    }
+  ]
+}

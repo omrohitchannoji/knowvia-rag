@@ -1,0 +1,272 @@
+question_id,split,question,answer,retrieved_evidence_citations,faithfulness_score,answer_relevancy_score,judge_model,judge_provider,error
+eval_dev_001,development,What is a Kubernetes Job and how does it execute worker tasks?,"A Kubernetes **Job** is a controller resource that runs finite, batch‑style workloads to completion.
+* It creates one or more Pods and guarantees that those Pods finish their work and exit successfully.
+* Unlike Deployments, which keep Pods running indefinitely, a Job’s Pods are terminated once the task is done.
+* Jobs are suited for batch processes, one‑time tasks, or any workload that should run to completion rather than continuously. [Source 1] [Source 2]
+
+When a Job is used to run worker tasks, each Pod that the Job spawns acts as an independent worker process.
+* Each worker Pod is started by the Job controller.
+* Upon creation, the worker Pod pulls a unit of work from a task queue (e.g., Redis) and processes it.
+* The worker repeats this cycle—picking a new unit of work and processing it—until the queue is exhausted, after which the Pod exits successfully. [Source 3]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.95,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_002,development,What message queue is used in the fine parallel work queue example?,"The fine‑parallel work‑queue example uses **Redis** as the message queue.
+[Source 1] describes starting a Redis instance to hold the work queue.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_003,development,What is a Kubernetes CronJob and how is it scheduled?,,"[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_004,development,What are the allowed concurrencyPolicy options for Kubernetes CronJobs?,The provided context does not contain any information about the `concurrencyPolicy` field for Kubernetes CronJobs. None of the source documents mention this setting or list its possible values.,"[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_005,development,How does Kubernetes Horizontal Pod Autoscaler (HPA) scale pods?,"Based on the provided documentation, here is the relevant policy/technical information: [Source 1] [Document: Unknown Document] [Section: General] [Access Level: PUBLIC_USER]
+[Document: pods_autoscale.html | Lineage: pods_autoscale.html > A Hands-On Guide to Kubernetes Horizontal & Vertical Pod Autoscalers]
+
+A Hands-On Guide to Kubernet... [Source 1] [Source 2] [Source 3] [Source 4] [Source 5]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.0,0.0,qwen/qwen3.8-27b,groq,
+eval_dev_006,development,What API group and kind are configured for the scaleTargetRef in HPA?,"The `scaleTargetRef` in the HPA example is configured to target a **Deployment** in the **apps/v1** API group:
+
+- **API group (apiVersion):** `apps/v1`
+- **Kind:** `Deployment`
+
+This information comes from the HPA YAML snippet in the provided documentation.
+
+**Topics not covered by the available documentation**
+- Any other possible API groups or kinds that could be used with `scaleTargetRef`
+- Details about how the HPA interacts with other resource types or custom resources
+- Configuration options beyond the example shown.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.0,0.8,qwen/qwen3.8-27b,groq,
+eval_dev_007,development,How do you monitor and debug failed Kubernetes Jobs with kubectl?,"To monitor and debug a Kubernetes Job that has failed, you can use the following `kubectl` commands, all of which are demonstrated in the provided documentation:
+
+1. **Check the Job status**
+   ```bash
+   kubectl get jobs <job-name>
+   ```
+   The output shows the number of completions (e.g., `0/1` indicates the job did not complete successfully) and other details such as duration and age. If the job shows `0/1` under *COMPLETIONS*, it may still be running or it has failed.
+   [Source 2]
+
+2. **List the pods created by the Job**
+   ```bash
+   kubectl get pods -l job-name=<job-name>
+   ```
+   This lists all pods that belong to the Job, including those that ended in an error state.
+   [Source 1]
+
+3. **View the logs of a failed pod**
+   ```bash
+   kubectl logs <failed-pod-name>
+   ```
+   The logs will contain the output produced by the container before it exited, which is essential for diagnosing why the Job failed (e.g., an exit code of `1`).
+   [Source 1]
+
+4. **(Optional) Follow logs in real‑time**
+   If you want to watch the output as it happens for a long‑running Job, you can use the `-f` flag:
+   ```bash
+   kubectl logs -f <pod-name>
+   ```
+   This is useful for debugging but is not required for a Job that has already failed.
+   [Source 5]
+
+5. **(Optional) Inspect detailed Job information**
+   For more context such as events or conditions, you can describe the Job:
+   ```bash
+   kubectl describe job <job-name>
+   ```
+   This command shows events that occurred during the Job’s lifecycle, which can help pinpoint failures.
+   [Source 3]
+
+By combining these commands—`kubectl get jobs`, `kubectl get pods -l job-name=…`, and `kubectl logs <pod>`—you can effectively monitor the state of a Job and debug any failures that occur.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.6,0.95,qwen/qwen3.8-27b,groq,
+eval_dev_008,development,What does backoffLimit control in a Kubernetes Job spec?,"In a Kubernetes Job specification, the `backoffLimit` field determines how many times the job’s pod will be retried if it fails.
+- In the example with `backoffLimit: 2`, the job will attempt to run up to two times before giving up.
+- In the example with `backoffLimit: 4`, the job will retry up to four times if it fails.
+
+Thus, `backoffLimit` controls the maximum number of retry attempts for a failing job pod. [Source 1] [Source 2]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.0,0.8,qwen/qwen3.8-27b,groq,
+eval_dev_009,development,How are Databricks jobs automated using the Databricks CLI?,"Databricks jobs can be automated entirely from the command line by using the **Databricks CLI**.
+The CLI is a thin wrapper around the Databricks REST API, so every CLI command maps to an API call and can be scripted or called from CI/CD pipelines.
+
+| What you do | CLI command | What it does | Source |
+|-------------|-------------|--------------|--------|
+| **Create a job** | `databricks jobs create --json @<file-path>` | Reads a JSON file that contains the job definition (name, tasks, schedule, etc.) and creates the job in the workspace. | [Source 1] |
+| **View a job** | `databricks jobs get <job-id>` | Retrieves the job’s JSON representation. | [Source 2] |
+| **Run a job immediately** | `databricks jobs run-now <job-id>` | Triggers a run of an existing job. | [Source 2] |
+| **Run a job from a definition (one‑time)** | `databricks jobs submit --json @<file-path>` | Submits a job definition and runs it once; the job is not persisted in the UI. | [Source 2] |
+| **Delete a job** | `databricks jobs delete <job-id>` | Removes the job from the workspace. | [Source 3] |
+| **Help / syntax** | `databricks jobs -h` or `databricks jobs <command> -h` | Shows usage and options for the jobs command group. | [Source 1] |
+
+### How it works in practice
+
+1. **Write a JSON job definition**
+   ```json
+   {
+     ""name"": ""My hello notebook job"",
+     ""tasks"": [
+       {
+         ""task_key"": ""my_hello_notebook_task"",
+         ""notebook_task"": {
+           ""notebook_path"": ""/Workspace/Users/someone@example.com/hello"",
+           ""source"": ""WORKSPACE""
+         }
+       }
+     ]
+   }
+   ```
+   Save this to a file (e.g., `job.json`).
+   *(Example from Source 2)*
+
+2. **Create the job**
+   ```bash
+   databricks jobs create --json @job.json
+   ```
+   The CLI sends a `POST /api/2.2/jobs/create` request under the hood.
+   *(Source 1, Source 2)*
+
+3. **Run the job**
+   *Scheduled*: include a `""schedule""` field in the JSON; the job will run automatically.
+   *Immediate*:
+   ```bash
+   databricks jobs run-now <job-id>
+   ```
+   *(Source 2)*
+
+4. **One‑time run without persisting the job**
+   ```bash
+   databricks jobs submit --json @job.json
+   ```
+   *(Source 2)*
+
+5. **Delete the job when finished**
+   ```bash
+   databricks jobs delete <job-id>
+   ```
+   *(Source 3)*
+
+These CLI commands can be embedded in shell scripts, CI/CD pipelines, or any automation framework that can execute shell commands, enabling fully automated job management on Databricks.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.4,0.9,qwen/qwen3.8-27b,groq,
+eval_dev_010,development,What developer tools are available in Databricks for managing jobs?,"Developer tools that Databricks offers for programmatically creating, managing, and running jobs include:
+
+| Tool | What it does | Key features |
+|------|--------------|--------------|
+| **Databricks CLI** | A command‑line interface that wraps the Databricks REST API. | One‑off tasks, shell scripting, direct REST‑API calls, job‑specific commands (`jobs create`, `jobs delete`, `jobs get`, `jobs run-now`, `jobs submit`). |
+| **Databricks SDKs** | Libraries for popular languages (Python, Java, Go, R) that provide higher‑level wrappers around the REST API. | Build custom workflows, create jobs from notebooks or other tasks, run jobs programmatically. |
+| **Databricks REST API** | The underlying HTTP API that all other tools use. | Direct API calls for environments where an SDK isn’t available or for fine‑grained control. |
+| **Databricks Asset Bundles** | A CI/CD‑friendly way to package jobs (and other workspace objects) as code. | Jobs can be defined in YAML/JSON/Python and deployed via bundles. |
+| **Databricks Terraform provider** | Enables infrastructure‑as‑code management of Databricks resources, including jobs. | Declarative job definitions that can be version‑controlled and applied with Terraform. |
+
+These tools are described in the Databricks job‑management documentation, which recommends using the CLI or SDKs for most use cases, and the REST API for situations where a language‑specific SDK is not available. The Asset Bundles and Terraform provider are highlighted for CI/CD scenarios. [Source 1] [Source 3]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.4,0.9,qwen/qwen3.8-27b,groq,
+eval_dev_011,development,How is dependency injection implemented in FastAPI?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_012,development,What is the basic syntax to declare a route in FastAPI?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_013,development,Who are you and what is your purpose?,"I’m the **Technical Documentation Intelligence Assistant**.
+My purpose is to help you understand, analyze, and work with technical documentation and related tooling. I can assist with:
+
+- Kubernetes resources (Jobs, CronJobs, Pods, HPA, etc.)
+- Databricks job management and configuration
+- Parallel work queues and scheduling
+- Cloud and container infrastructure best practices
+- And more technical documentation topics you might need help with.
+
+Feel free to ask me anything technical—I'm here to make your documentation and infrastructure work smoother!",none (conversational),0.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_014,development,Hello there! Can you help me today?,"Hello! I’m the Technical Documentation Intelligence Assistant. I’m here to help you analyze and understand technical documentation—whether it’s Kubernetes Jobs, CronJobs, HPA, Databricks job management, parallel work queues, or cloud/container infrastructure. How can I assist you today?",none (conversational),1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_015,development,What is the best recipe for baking chocolate chip cookies?,I am unable to answer based on the provided context.,none (out_of_scope),1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_016,development,Who won the FIFA World Cup in 2022?,I am unable to answer based on the provided context.,none (out_of_scope),1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_017,development,How does C++ exception unwinding work across Windows stack frames?,"On Windows, the C++ runtime performs exception unwinding in two distinct phases:
+
+1. **Global unwind** – the runtime walks the call stack from the point where the exception was thrown up through each nested frame. This is done by invoking the Windows API `RtlUnwind`, which triggers the cleanup of each frame that has a registered exception handler.
+   *Source 2, Source 3*
+
+2. **Local unwind** – once the appropriate catch block has been found, the runtime performs a local unwind within that frame to destroy any objects that were constructed after the point of the throw but before the catch.
+   *Source 2, Source 3*
+
+When a catch block matches, the following steps occur:
+
+- The catch object is initialized.
+- A global unwind (`RtlUnwind`) is performed to unwind all nested frames.
+- A local unwind is performed to unwind local frames.
+- The catch block is executed.
+  *Source 2, Source 3*
+
+After the catch block runs, it can either:
+
+- Return normally, in which case execution continues after the `try`/`catch` construct.
+- Rethrow the exception (via `throw;`), which causes the original exception to be re‑raised and the unwinding process to start again.
+  *Source 3*
+
+If no catch block matches the exception, the handler returns `ExceptionContinueSearch`, allowing the search to continue up the stack.
+  *Source 3*
+
+The overall mechanism is coordinated by the runtime’s `__CxxFrameHandler` routine, which integrates the Windows exception handling infrastructure with the C++ language semantics.
+  *Source 2, Source 3*","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.65,0.95,qwen/qwen3.8-27b,groq,
+eval_dev_018,development,How do Kubernetes CronJob schedules trigger Jobs and monitor their completion backoff?,"Kubernetes CronJobs trigger a **Job** resource at the times specified in the `schedule` field of the CronJob manifest.
+When the schedule fires, the controller creates a new Job that runs the pod template defined in `jobTemplate.spec`. The created Job can be seen with `kubectl get jobs` and its pods can be inspected with `kubectl get pods -l job‑name=<job‑name>` [Source 1].
+
+To monitor how a Job completes (including any retry back‑off), you can:
+
+1. **Check the Job status** – `kubectl get jobs <job‑name>` shows the number of completions and whether the Job has reached its completion deadline.
+2. **Inspect pod logs** – `kubectl logs <pod‑name>` lets you see the output of each attempt, which is useful for debugging failures.
+3. **Use the `backoffLimit` field** – a Job can specify `backoffLimit` (e.g., `backoffLimit: 2`) to limit the number of retry attempts after a failure. The Job’s status will reflect how many attempts were made and whether the back‑off limit was reached.
+4. **Describe the Job** – `kubectl describe job <job‑name>` provides detailed events, including retry attempts and back‑off information.
+
+These steps let you track the lifecycle of the Job created by a CronJob and understand any back‑off behavior that occurs when the Job fails.
+
+*Sources: [Source 1], [Source 2]*","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.4,0.9,qwen/qwen3.8-27b,groq,
+eval_dev_019,development,How can an HPA target a Deployment running parallel work queue consumer pods?,"The provided documentation does not contain any information on configuring a Horizontal Pod Autoscaler (HPA) to target a Deployment that runs parallel work‑queue consumer pods. The excerpts describe how to create a Kubernetes Job that runs multiple parallel pods to consume a queue (e.g., using Redis) and mention general autoscaling concepts, but they do not cover HPA configuration, metric selection, or deployment targeting for such workloads.
+
+**What is covered in the available documentation:**
+- How to define a Job with `parallelism` to run multiple consumer pods that process queue items and exit when done.
+- Steps to set up a Redis instance and populate a queue for the Job.
+- General information about autoscaling (VPA, HPA vs. VPA discussion) but no specific HPA configuration for a Deployment.
+
+**What is not covered:**
+- The exact HPA YAML or command‑line instructions to target a Deployment that runs parallel work‑queue consumer pods.
+- How to expose metrics or configure scaling thresholds for such a Deployment.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.95,0.9,qwen/qwen3.8-27b,groq,
+eval_dev_020,development,What are the updated user authentication requirements under NexaCloud Security Policy v2.0?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_021,development,What are the updated user authentication requirements under NexaCloud Security Policy v2.0?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_022,development,Who is allowed production database access according to NexaCloud Security Policy v2.0?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_023,development,Who is allowed production database access according to NexaCloud Security Policy v2.0?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_024,development,What is the quantum encryption protocol used in NexaCloud satellite links?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_025,development,What is the root password for the production Kubernetes worker cluster?,I am unable to answer based on the provided context.,none (out_of_scope),1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_026,development,"In the Redis work queue script, what does q.lease do?","In the worker script shown in the documentation, the call
+
+```python
+item = q.lease(lease_secs=10, block=True, timeout=2)
+```
+
+is used to **retrieve an item from the Redis work queue**. The call passes three arguments:
+
+* `lease_secs=10` – a lease duration of 10 seconds
+* `block=True` – the call should block until an item is available
+* `timeout=2` – the maximum time to wait for an item before returning `None`
+
+The documentation does not provide a detailed description of what `q.lease` actually does internally (e.g., how it implements the lease or what happens when the lease expires). It only shows the method being called with those parameters.
+
+**What is covered by the available documentation**
+- The method name (`q.lease`) and the arguments it receives in the worker script.
+- That it is used to obtain an item from the queue.
+
+**What is NOT covered by the available documentation**
+- The internal implementation or semantics of the lease mechanism.
+- What happens to the item after the lease expires or if the worker fails.
+- Any additional side‑effects or error handling associated with `q.lease`.
+
+[Source 1]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.0,0.8,qwen/qwen3.8-27b,groq,
+eval_dev_027,development,What does startingDeadlineSeconds specify for a Kubernetes CronJob?,The provided context does not contain any information about the `startingDeadlineSeconds` field for a Kubernetes CronJob.,"[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_028,development,What metrics does HPA evaluate by default to scale workload replicas?,I am unable to answer based on the provided context.,none,1.0,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_029,development,How do you view pod logs for a failed Kubernetes Job?,"To view the logs of a pod that failed as part of a Kubernetes Job, follow these steps:
+
+1. **List the pods created by the Job**
+   ```bash
+   kubectl get pods -l job-name=<job-name>
+   ```
+   This command filters pods by the Job label, showing all pods that belong to the Job, including those that ended in an error state.
+   [Source 1]
+
+2. **Identify a failed pod**
+   From the list, pick one of the pods that is in the **Error** state (or any pod that finished with a non‑zero exit code).
+
+3. **View the pod’s logs**
+   ```bash
+   kubectl logs <failed-pod-name>
+   ```
+   Replace `<failed-pod-name>` with the actual name of the pod you selected. The logs will show the output produced before the pod exited, which is useful for debugging the failure.
+   [Source 1] [Source 2]
+
+These commands allow you to inspect the output of a pod that failed during a Job execution.","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.85,1.0,qwen/qwen3.8-27b,groq,
+eval_dev_030,development,What Databricks REST API request maps to the databricks jobs get CLI command?,"The Databricks CLI command `databricks jobs get` is a thin wrapper around the REST API endpoint that retrieves a job’s details.
+It maps to the following REST API request:
+
+```
+GET /api/2.2/jobs/get
+```
+
+This endpoint expects the job ID (or job name) in the request body or query parameters, and returns the job’s JSON representation.
+
+[Source 1]","[Source 1] Unknown Document (sec: General, access: PUBLIC_USER); [Source 2] Unknown Document (sec: General, access: PUBLIC_USER); [Source 3] Unknown Document (sec: General, access: PUBLIC_USER); [Source 4] Unknown Document (sec: General, access: PUBLIC_USER); [Source 5] Unknown Document (sec: General, access: PUBLIC_USER)",0.0,0.8,qwen/qwen3.8-27b,groq,

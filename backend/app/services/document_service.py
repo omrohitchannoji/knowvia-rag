@@ -206,27 +206,44 @@ class DocumentService:
         chunk_texts = [c.text for c in chunks]
         vectors = self.embedding_service.embed_batch(chunk_texts)
 
+        # Snapshot previous state for atomic rollback on partial failure
+        prev_chunks = list(self.all_chunks)
+        prev_metadata = list(self.all_metadata)
+
         # Deduplicate: Remove prior existing chunks for this doc_id from BM25 to prevent duplicates on repeat ingestion
         remaining_pairs = [
             (c, m) for c, m in zip(self.all_chunks, self.all_metadata)
             if m.get("document_id") != doc_id
         ]
-        self.all_chunks = [c for c, m in remaining_pairs]
-        self.all_metadata = [m for c, m in remaining_pairs]
+        new_all_chunks = [c for c, m in remaining_pairs] + chunks
+        new_all_metadata = [m for c, m in remaining_pairs] + metadata_list
 
         try:
-            # Index into Qdrant Vector Store
+            # 1. Index into Qdrant Vector Store
             indexed_count = self.vector_store.add_chunks(chunks, vectors, metadata_list)
-            # Index into BM25 Sparse Index
-            self.all_chunks.extend(chunks)
-            self.all_metadata.extend(metadata_list)
-            self.bm25_retriever.index_chunks(self.all_chunks, self.all_metadata)
+            # 2. Index into BM25 Sparse Index
+            self.bm25_retriever.index_chunks(new_all_chunks, new_all_metadata)
+            self.all_chunks = new_all_chunks
+            self.all_metadata = new_all_metadata
         except Exception as e:
-            logger.error(f"Failed to synchronize indexes for document {doc_id}: {e}")
+            logger.error(f"Failed to synchronize indexes for document {doc_id}: {e}. Initiating rollback...")
+            # Rollback Qdrant points
             try:
                 self.vector_store.delete_document(doc_id)
-            except Exception:
-                pass
+            except Exception as rollback_err:
+                logger.warning(f"Rollback error for Qdrant {doc_id}: {rollback_err}")
+            # Rollback in-memory state
+            self.all_chunks = prev_chunks
+            self.all_metadata = prev_metadata
+            if prev_chunks:
+                try:
+                    self.bm25_retriever.index_chunks(prev_chunks, prev_metadata)
+                except Exception:
+                    pass
+            else:
+                self.bm25_retriever.indexed_chunks = []
+                self.bm25_retriever.indexed_metadata = []
+                self.bm25_retriever.bm25_index = None
             raise
 
         return {
@@ -256,7 +273,7 @@ class DocumentService:
         else:
             self.bm25_retriever.indexed_chunks = []
             self.bm25_retriever.indexed_metadata = []
-            self.bm25_retriever.bm25 = None
+            self.bm25_retriever.bm25_index = None
         removed_count = original_len - len(self.all_chunks)
         logger.info(f"Deleted document {document_id}; BM25 index synced (removed {removed_count} chunks).")
         return True

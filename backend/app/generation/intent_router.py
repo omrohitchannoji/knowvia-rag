@@ -1,6 +1,6 @@
 import re
 import json
-from typing import Tuple, Optional, List, Dict, Any
+from typing import Tuple, Optional, List, Dict, Any, Callable
 from enum import Enum
 from pydantic import BaseModel, Field, ValidationError
 from backend.app.core.logging import logger
@@ -54,16 +54,20 @@ GREETING_PATTERNS = [
     r"\bare\s+(you|u)\s+a\s+(rag|ai)\s+(assistant|bot)\b",
     r"\bhelp\b",
     r"\bthanks\b",
-    r"\bthank\s+(you|u)\b"
+    r"\bthank\s+(you|u)\b",
+    r"\b(last|previous)\s+question\b"
 ]
 
 OUT_OF_SCOPE_PATTERNS = [
     r"\b(weather|weather\s+today)\b",
-    r"\bstock\s+market\b",
+    r"\b(stock\s+market|nasdaq|stock\s+to\s+buy)\b",
     r"\btell\s+me\s+a\s+joke\b",
     r"\bsing\s+a\s+song\b",
-    r"\b(cricket|football)\s+match\b",
-    r"\bwho\s+won\b"
+    r"\b(cricket|football|world\s+cup)\b",
+    r"\bwho\s+won\b",
+    r"\bcapital\s+city\b",
+    r"\b(recipe|baking|cookies)\b",
+    r"\b(nasa|interstellar|alpha\s+centauri)\b"
 ]
 
 class IntentRouter:
@@ -73,7 +77,8 @@ class IntentRouter:
     def route(
         self,
         query: str,
-        chat_history: Optional[List[Dict[str, str]]] = None
+        chat_history: Optional[List[Dict[str, str]]] = None,
+        usage_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> RouterResult:
         """
         Two-Tier Query Router:
@@ -87,7 +92,13 @@ class IntentRouter:
         normalized_q = re.sub(r"[^\w\s]", "", clean_q.lower()).strip()
 
         # Check for technical terms that indicate Knowledge RAG evaluation
-        tech_pattern = r"\b(kubernetes|job|jobs|cronjob|cronjobs|hpa|vpa|autoscale|autoscaling|databricks|parallelism|pod|pods|queue|workload|container|docker|api|apis|token|auth|security|replication|cluster|policy|policies|rto|rpo|password|disaster|recovery)\b"
+        tech_pattern = (
+            r"\b(kubernetes|job|jobs|cronjob|cronjobs|hpa|vpa|autoscale|autoscaling|databricks|"
+            r"parallelism|pod|pods|queue|workload|container|docker|api|apis|token|auth|security|"
+            r"replication|replicas|cluster|policy|policies|rto|rpo|password|disaster|recovery|"
+            r"database|nexacloud|access|production|fastapi|python|sdk|cli|kubectl|etcd|paging|"
+            r"cpp|stack|server|endpoint|route|concurrency|backoff|redis|restart)\b"
+        )
         has_tech_keyword = bool(re.search(tech_pattern, normalized_q))
 
         if not has_tech_keyword:
@@ -119,6 +130,9 @@ class IntentRouter:
                 user_prompt=user_prompt,
                 temperature=0.0
             )
+            if usage_callback:
+                usage = getattr(self.llm_client, "last_usage", {})
+                usage_callback(dict(usage) if isinstance(usage, dict) else {})
 
             # Parse JSON from LLM response
             json_match = re.search(r"\{.*\}", raw_response, re.DOTALL)
@@ -141,7 +155,8 @@ class IntentRouter:
             if any(t in normalized_q for t in follow_up_triggers) or len(clean_q.split()) <= 4:
                 return RouterResult(intent=QueryIntent.HYBRID, search_query=clean_q, reason="Fallback Follow-up Hybrid Match")
 
-        return RouterResult(intent=QueryIntent.CONVERSATIONAL, reason="Fallback Conversational Default")
+        # Non-greeting queries without technical keywords or conversational triggers are out-of-scope
+        return RouterResult(intent=QueryIntent.OUT_OF_SCOPE, reason="Fallback Out-Of-Scope Default")
 
 # Singleton helper
 _intent_router_instance = None

@@ -16,6 +16,11 @@ class GenerationService:
     def __init__(self, llm_client: Optional[BaseLLMClient] = None):
         self.llm_client = llm_client or get_llm_client()
         self.evidence_evaluator = get_evidence_evaluator()
+        self.last_call_usage: Optional[Dict[str, Any]] = None
+
+    def _snapshot_call_usage(self) -> Dict[str, Any]:
+        usage = getattr(self.llm_client, "last_usage", {})
+        return dict(usage) if isinstance(usage, dict) else {"usage_available": False}
 
     def generate_conversational(
         self,
@@ -26,6 +31,7 @@ class GenerationService:
         Generates a natural conversational response for greetings, identity, and capability queries using LLM.
         Bypasses document retrieval, vector DB, reranker, and RAG grounding/abstention completely.
         """
+        self.last_call_usage = None
         history_str = ""
         if chat_history:
             formatted_turns = [f"{msg.get('role', 'user')}: {msg.get('content', '')}" for msg in chat_history[-5:]]
@@ -36,12 +42,15 @@ class GenerationService:
             user_prompt = f"CONVERSATION HISTORY:\n{history_str}\n\n{user_prompt}"
 
         try:
-            return self.llm_client.generate(
+            answer = self.llm_client.generate(
                 system_prompt=SYSTEM_CONVERSATIONAL_PROMPT,
                 user_prompt=user_prompt,
                 temperature=0.3
             )
+            self.last_call_usage = self._snapshot_call_usage()
+            return answer
         except Exception as e:
+            self.last_call_usage = {"usage_available": False, "model": getattr(settings, "LLM_MODEL", "unknown")}
             logger.error(f"Error in conversational LLM generation: {e}")
             return (
                 "Hello! I am the Technical Documentation Intelligence Assistant. "
@@ -65,6 +74,7 @@ class GenerationService:
         4. Invokes LLM Provider.
         5. Extracts inline citations and returns structured response with latency.
         """
+        self.last_call_usage = None
         start_time = time.perf_counter()
         effective_search_q = search_query or query
 
@@ -119,7 +129,9 @@ class GenerationService:
                 user_prompt=user_prompt,
                 temperature=settings.LLM_TEMPERATURE
             )
+            self.last_call_usage = self._snapshot_call_usage()
         except Exception as e:
+            self.last_call_usage = {"usage_available": False, "model": getattr(settings, "LLM_MODEL", "unknown")}
             logger.error(f"Generation error during LLM invocation: {e}")
             raw_answer = ABSTAIN_TEXT
 
