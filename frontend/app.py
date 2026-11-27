@@ -480,15 +480,46 @@ st.markdown(
         color: #ffffff;
     }
 
+    /* ---- Bottom Chat Input & Wrapper (Fix Brown Footer Tint) ---- */
+    div[data-testid="stBottom"],
+    div[data-testid="stBottom"] > div,
+    section[data-testid="stBottom"],
+    section[data-testid="stBottom"] > div {
+        background: var(--kv-bg) !important;
+        background-color: var(--kv-bg) !important;
+        border-top: 1px solid var(--kv-border) !important;
+    }
+
     div[data-testid="stChatInput"] {
         max-width: 940px;
         margin: 0 auto;
+        background: transparent !important;
     }
     div[data-testid="stChatInput"] > div {
         background: var(--kv-surface) !important;
         border: 1px solid var(--kv-border-accent) !important;
         border-radius: 14px !important;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+    div[data-testid="stChatInput"] textarea {
+        background: transparent !important;
+        color: var(--kv-text) !important;
+    }
+
+    /* ---- File Uploader Dropzone ---- */
+    section[data-testid="stFileUploaderDropzone"],
+    div[data-testid="stFileUploaderDropzone"] {
+        background-color: var(--kv-surface) !important;
+        border: 1px dashed var(--kv-border-accent) !important;
+        border-radius: 12px !important;
+        color: var(--kv-text-secondary) !important;
+    }
+    section[data-testid="stFileUploaderDropzone"] button,
+    div[data-testid="stFileUploaderDropzone"] button {
+        background: var(--kv-surface-2) !important;
+        color: var(--kv-accent-light) !important;
+        border: 1px solid var(--kv-border-accent) !important;
+        box-shadow: none !important;
     }
 
     /* ---- Page Headers & Metric Cards ---- */
