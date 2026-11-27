@@ -67,9 +67,9 @@ def test_langfuse_live_trace_and_seven_nested_observations():
     assert "input" not in gen_kwargs
     assert "output" not in gen_kwargs
 
-    # Verify cost remains unavailable (None) when MODEL_PRICING is unset
-    assert trace.estimated_cost_usd is None
-    assert trace.cost_calculation_details["cost_available"] is False
+    # Verify cost is computed from configured MODEL_PRICING for openai/gpt-oss-20b
+    assert trace.estimated_cost_usd == 2.5e-05
+    assert trace.cost_calculation_details["cost_available"] is True
 
     # Verify root span updated, ended, and client flushed
     assert mock_root_span.update.called

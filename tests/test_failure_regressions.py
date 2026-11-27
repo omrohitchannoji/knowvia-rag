@@ -127,6 +127,11 @@ def test_tracer_redaction_and_unavailable_tokens_and_cost():
     assert trace.cost_calculation_details.get("cost_available") is False
 
     # Even with token counts present, unset pricing rates must return None (unavailable)
-    cost, details = calculate_cost("openai/gpt-oss-20b", prompt_tokens=500, completion_tokens=100, usage_available=True)
+    cost, details = calculate_cost("llama-3.1-8b-instant", prompt_tokens=500, completion_tokens=100, usage_available=True)
     assert cost is None
     assert details.get("cost_available") is False
+
+    # Configured pricing rates (openai/gpt-oss-20b) compute exact cost from MODEL_PRICING
+    priced_cost, priced_details = calculate_cost("openai/gpt-oss-20b", prompt_tokens=500, completion_tokens=100, usage_available=True)
+    assert priced_cost == 6.8e-05
+    assert priced_details.get("cost_available") is True

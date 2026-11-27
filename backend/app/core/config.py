@@ -64,10 +64,11 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60)
 
     # Cost Tracking & Pricing Table (USD per 1,000,000 tokens)
-    # Fill in verified provider rates; unset (None) rates report cost as unavailable rather than guessing.
+    # Groq published GPT-OSS 20B rates as of 2026-11-27. Other models remain unset
+    # until their provider rates are verified; unset rates report cost as unavailable.
     MODEL_PRICING: Dict[str, Dict[str, Optional[float]]] = Field(
         default={
-            "openai/gpt-oss-20b": {"input_per_m": None, "output_per_m": None},
+            "openai/gpt-oss-20b": {"input_per_m": 0.075, "output_per_m": 0.30},
             "qwen/qwen3.8-27b": {"input_per_m": None, "output_per_m": None},
             "llama-3.1-8b-instant": {"input_per_m": None, "output_per_m": None},
             "llama-3.3-70b-versatile": {"input_per_m": None, "output_per_m": None},

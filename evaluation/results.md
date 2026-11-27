@@ -176,5 +176,5 @@ In the legacy 10-query benchmark, `Dense Only` produced identical `Recall@5 = 0.
 * **Groq**: Successful response from `openai/gpt-oss-20b`; logged generation latency was `780.08 ms`.
 * **Langfuse**: Live trace created with guardrail, router, and generation observations. Trace ID: `352fefc092352363eb3845e8bcb12b86`.
 * **Provider usage**: Available; `386` total tokens for the request.
-* **Cost**: Unavailable because the `MODEL_PRICING` rates remain unset. No price was estimated.
+* **Cost at capture time**: Unavailable because the `MODEL_PRICING` rates were unset when this trace was recorded. Groq's verified `openai/gpt-oss-20b` rates were added to `backend/app/core/config.py` afterward; this historical trace was not recalculated.
 * **Focused offline validation**: `tests/test_langfuse_tracing.py tests/test_failure_regressions.py` — `11 passed`; pytest emitted a cache permission warning only.
