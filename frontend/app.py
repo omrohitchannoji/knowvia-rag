@@ -7,7 +7,7 @@ import streamlit as st
 # Page Configuration
 # ----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Knowvia AI — Grounded Document Intelligence",
+    page_title="Knowvia AI — Knowledge Assistant",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -129,7 +129,6 @@ st.markdown(
         transform: translateX(2px);
     }
 
-    /* Active nav button styling via primary kind */
     section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
         background: linear-gradient(90deg, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0.06) 100%);
         color: #ffffff;
@@ -245,7 +244,7 @@ st.markdown(
         background: linear-gradient(135deg, rgba(23, 27, 38, 0.9) 0%, rgba(17, 20, 29, 0.95) 100%);
         border: 1px solid var(--kv-border);
         border-radius: 18px;
-        padding: 28px 30px;
+        padding: 26px 30px;
         margin-bottom: 22px;
         position: relative;
         overflow: hidden;
@@ -288,23 +287,6 @@ st.markdown(
         font-size: 0.92rem;
         margin: 0;
         line-height: 1.5;
-    }
-
-    .capability-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 16px;
-    }
-
-    .cap-chip {
-        font-size: 0.74rem;
-        color: var(--kv-text-secondary);
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--kv-border);
-        padding: 4px 10px;
-        border-radius: 8px;
-        font-family: var(--kv-mono);
     }
 
     /* ---- Chat Messages ---- */
@@ -459,7 +441,6 @@ st.markdown(
         box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
     }
 
-    /* Secondary buttons (example prompts) */
     .stButton > button[kind="secondary"] {
         background: var(--kv-surface);
         border: 1px solid var(--kv-border);
@@ -480,7 +461,7 @@ st.markdown(
         color: #ffffff;
     }
 
-    /* ---- Bottom Chat Input & Wrapper (Fix Brown Footer Tint) ---- */
+    /* ---- Bottom Chat Input & Wrapper ---- */
     div[data-testid="stBottom"],
     div[data-testid="stBottom"] > div,
     section[data-testid="stBottom"],
@@ -871,16 +852,10 @@ if st.session_state.view == "chat":
         """
         <div class="hero-banner">
             <div class="hero-kicker">⚡ Hybrid Dense + BM25 • Cross-Encoder Reranked</div>
-            <h1 class="hero-title">Intelligence Playground</h1>
+            <h1 class="hero-title">Knowledge Assistant</h1>
             <p class="hero-sub">
                 Query your indexed infrastructure, architecture, and policy corpus with pre-retrieval role filtering and citation verification.
             </p>
-            <div class="capability-chips">
-                <span class="cap-chip">Qdrant 384d</span>
-                <span class="cap-chip">BM25Okapi + RRF</span>
-                <span class="cap-chip">ms-marco-MiniLM-L-6-v2</span>
-                <span class="cap-chip">Evidence Abstention</span>
-            </div>
         </div>
         """,
         unsafe_allow_html=True,
