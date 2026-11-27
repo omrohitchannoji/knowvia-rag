@@ -135,3 +135,60 @@ def test_tracer_redaction_and_unavailable_tokens_and_cost():
     priced_cost, priced_details = calculate_cost("openai/gpt-oss-20b", prompt_tokens=500, completion_tokens=100, usage_available=True)
     assert priced_cost == 6.8e-05
     assert priced_details.get("cost_available") is True
+
+
+def test_context_builder_extracts_payload_metadata():
+    """
+    Verifies ContextBuilder.format_context reads metadata from 'payload' and
+    top-level candidate fields (as returned by VectorStore and BM25Retriever)
+    instead of defaulting to 'Unknown Document'.
+    """
+    from backend.app.generation.context import ContextBuilder
+
+    candidates = [
+        {
+            "text": "A CronJob creates Job objects on a repeating schedule.",
+            "payload": {
+                "document_name": "cronjobs.docx",
+                "heading_lineage": "cronjobs.docx > Understanding CronJobs",
+                "access_level": "public",
+                "version": "1.0",
+            },
+            "document_name": "cronjobs.docx",
+            "access_level": "public",
+        }
+    ]
+    formatted, citations = ContextBuilder.format_context(candidates)
+    assert len(citations) == 1
+    assert citations[0].document_name == "cronjobs.docx"
+    assert citations[0].section == "cronjobs.docx > Understanding CronJobs"
+    assert citations[0].access_level == "public"
+    assert "[Document: cronjobs.docx]" in formatted
+    assert "Unknown Document" not in formatted
+
+
+def test_mock_offline_client_usage_and_clean_snippet():
+    """
+    Verifies MockOfflineLLMClient marks usage_available=False on conversational
+    prompts and strips ContextBuilder metadata headers from fallback snippets.
+    """
+    from backend.app.generation.llm import MockOfflineLLMClient
+
+    client = MockOfflineLLMClient()
+    conv_resp = client.generate(system_prompt="sys", user_prompt="USER MESSAGE: what can I ask you?")
+    assert "Technical Documentation" in conv_resp
+    assert client.last_usage.get("usage_available") is False
+    assert client.last_usage.get("total_tokens") is None
+
+    rag_prompt = (
+        "<UNTRUSTED_CONTEXT_CHUNKS>\n"
+        "[Source 1] [Document: cronjobs.docx] [Section: General] [Access Level: public]\n"
+        "A CronJob creates Job objects on a repeating schedule.\n"
+        "</UNTRUSTED_CONTEXT_CHUNKS>"
+    )
+    rag_resp = client.generate(system_prompt="sys", user_prompt=rag_prompt)
+    assert "[Document: cronjobs.docx]" not in rag_resp
+    assert "[Access Level: public]" not in rag_resp
+    assert "A CronJob creates Job objects on a repeating schedule." in rag_resp
+    assert "[Source 1]" in rag_resp
+

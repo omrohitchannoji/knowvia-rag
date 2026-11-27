@@ -157,7 +157,14 @@ class MockOfflineLLMClient(BaseLLMClient):
     """
     def generate(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> str:
         logger.info("Invoking Offline Mock LLM Client (Keyless / Pytest mode)...")
-        
+        self.last_usage = {
+            "usage_available": False,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+            "model": "mock-offline"
+        }
+
         # Check if context is present
         if "<UNTRUSTED_CONTEXT_CHUNKS>" not in user_prompt or "</UNTRUSTED_CONTEXT_CHUNKS>" not in user_prompt:
             return (
@@ -175,16 +182,16 @@ class MockOfflineLLMClient(BaseLLMClient):
         if not sources:
             return "I am unable to answer based on the provided context."
 
+        # Strip ContextBuilder metadata header lines so raw [Document: ...] tags are not echoed
+        body_lines = [
+            line for line in context_part.splitlines()
+            if not line.startswith("[Source ") and line.strip() != "---"
+        ]
+        clean_snippet = " ".join(line.strip() for line in body_lines if line.strip())[:250]
+
         # Return synthesized response referencing available sources
-        cited_sources = " ".join([f"[Source {s}]" for s in sorted(set(sources))])
-        self.last_usage = {
-            "usage_available": False,
-            "prompt_tokens": None,
-            "completion_tokens": None,
-            "total_tokens": None,
-            "model": "mock-offline"
-        }
-        return f"Based on the provided documentation, here is the relevant policy/technical information: {context_part[:250]}... {cited_sources}"
+        cited_sources = " ".join([f"[Source {s}]" for s in sorted(set(sources), key=int)])
+        return f"Based on the provided documentation: {clean_snippet}... {cited_sources}"
 
 
 # Singleton instance

@@ -23,14 +23,28 @@ class ContextBuilder:
 
         for idx, candidate in enumerate(candidates, start=1):
             text = candidate.get("text", "").strip()
-            metadata = candidate.get("metadata", {})
-            
-            doc_name = metadata.get("document_name", metadata.get("title", "Unknown Document"))
-            section = metadata.get("heading_lineage", metadata.get("section", "General"))
-            access_level = metadata.get("access_level", "PUBLIC_USER")
-            version = metadata.get("version", "v1.0")
-            page = metadata.get("page")
-            source_url = metadata.get("source_url")
+            metadata = candidate.get("metadata") or candidate.get("payload") or {}
+
+            doc_name = (
+                metadata.get("document_name")
+                or metadata.get("title")
+                or candidate.get("document_name")
+                or "Unknown Document"
+            )
+            section = (
+                metadata.get("heading_lineage")
+                or metadata.get("section")
+                or candidate.get("section")
+                or "General"
+            )
+            access_level = (
+                metadata.get("access_level")
+                or candidate.get("access_level")
+                or "PUBLIC_USER"
+            )
+            version = metadata.get("version") or candidate.get("version") or "v1.0"
+            page = metadata.get("page") if metadata.get("page") is not None else candidate.get("page")
+            source_url = metadata.get("source_url") or candidate.get("source_url")
 
             # Build Citation mapping schema
             citation = Citation(
