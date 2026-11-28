@@ -1,180 +1,64 @@
-<div align="center">
+# Knowvia AI — Document Q&A with Hybrid RAG
 
-# 🧠 Knowvia AI — Secure, Evaluated RAG Platform
+Knowvia AI answers questions over technical and policy documents through a FastAPI backend and Streamlit interface. I built it to compare retrieval approaches and measure how reranking, evidence-based abstention, and access filtering affect answer quality and latency. It combines dense and BM25 search, citation-guided LLM generation, JWT-based role filtering, and evaluation/tracing tools.
 
-[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3110/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Qdrant](https://img.shields.io/badge/VectorDB-Qdrant-dc2626?style=for-the-badge)](https://qdrant.tech/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](https://opensource.org/licenses/MIT)
+> **Project scope:** This is a portfolio prototype, not a production security system. Demo identities are stored in source code, guardrails use pattern matching and regular expressions, and generated answers/citations still require validation. Use only non-sensitive content.
 
-Knowvia AI is a portfolio application for asking questions over technical and policy documents. It combines dense and BM25 retrieval, Reciprocal Rank Fusion (RRF), cross-encoder reranking, evidence-based abstention, role-filtered retrieval, and citation-backed generation. The repository also contains retrieval ablations, a generation-quality evaluation, and optional Langfuse tracing.
+## Live demo
 
-[Demo & Endpoints](#-demo-and-endpoints) • [What It Demonstrates](#-what-it-demonstrates) • [Architecture](#-architecture) • [API Examples](#-api-examples) • [Evaluation](#-evaluation-and-current-evidence) • [Local Development](#-local-development)
+- **Streamlit app:** [Open Knowvia AI](https://knowvia-rag.streamlit.app/)
 
-</div>
+## Engineering highlights
 
-> [!WARNING]
-> **Scope:** This is a demonstration project, not a production-ready security or identity platform. The included demo accounts are stored in source code, and input/output safeguards use heuristics and regular expressions. Do not use the public demo endpoint for sensitive information.
+- **Hybrid retrieval:** `all-MiniLM-L6-v2` embeddings (384 dimensions) searched in Qdrant, combined with BM25 keyword search using weighted Reciprocal Rank Fusion (`k=60`).
+- **Reranking and abstention:** `cross-encoder/ms-marco-MiniLM-L-6-v2` reranks candidates. An evidence evaluator classifies support as strong, partial, or insufficient before generation. Sigmoid-scaled reranker scores are not calibrated probabilities.
+- **Document-aware ingestion:** Markdown and PDF parsing, section breadcrumbs, and chunking targeted at 1,800 characters with 250-character overlap. These are character settings, not token counts.
+- **Role-based retrieval:** FastAPI verifies a JWT and applies the server-assigned role to both Qdrant and BM25 retrieval filters. The current identity store is a static demo implementation, not an external identity provider.
+- **Observability:** Optional Langfuse traces record applicable pipeline stages. The latency script aggregates p50/p95 latency, provider-reported tokens, and cost calculated from configured pricing constants.
 
----
-
-## 🌐 Demo and endpoints
-
-| Resource | Link | Notes |
-| :--- | :--- | :--- |
-| **Streamlit UI** | [Knowvia AI demo](https://knowvia-rag.streamlit.app/) | Availability may change. |
-| **FastAPI API** | `http://13.205.104.107:8000/api/v1` | HTTP demo endpoint; do not send sensitive data. |
-| **API documentation** | `http://13.205.104.107:8000/docs` | Available when the backend is online. |
-| **Health endpoint** | `http://13.205.104.107:8000/api/v1/health` | Reports app metadata and process uptime; does not probe every dependency. |
-
----
-
-## ✨ What it demonstrates
-
-| Capability | Implementation & Notes |
-| :--- | :--- |
-| **Hybrid retrieval** | `sentence-transformers/all-MiniLM-L6-v2` embeddings (384 dimensions) in Qdrant and BM25Okapi keyword retrieval, fused with weighted RRF (`k=60`). |
-| **Reranking and evidence checks** | `cross-encoder/ms-marco-MiniLM-L-6-v2` scores candidates; evidence assessment classifies support as strong, partial, or insufficient. Sigmoid-scaled scores are not calibrated probabilities. |
-| **Document structure** | Markdown/PDF parsing, section lineage breadcrumbs, and chunking targeted at 1,800 characters with 250 characters of overlap. These are character limits, not token counts; some atomic blocks may exceed the target. |
-| **Role-filtered retrieval** | JWT claims provide the role used by Qdrant and BM25 access filters. The example identity store is static and intended only for local/demo use. |
-| **Query routing** | Four routes—`CONVERSATIONAL`, `OUT_OF_SCOPE`, `HYBRID`, and `KNOWLEDGE`. Pattern-based routing may avoid a router-model call; a conversational answer can still call the generation model. |
-| **Grounded answer flow** | Retrieved text is marked as untrusted context and the prompt requests `[Source X]` citations. Generation can still omit or misuse citations. |
-| **Safeguards** | Known injection patterns are checked before retrieval and selected secret-like strings are redacted from output. These are best-effort safeguards, not comprehensive security controls. |
-| **Observability** | Optional Langfuse traces record applicable stage latency and token usage when exposed by the provider. Costs are estimates based on configured per-token rates. |
-
----
-
-## 🏗️ Architecture
+## How a question is answered
 
 ```mermaid
 flowchart LR
-    Docs["Markdown / PDF"] --> Parse["Parse structure and metadata"]
-    Parse --> Chunk["Lineage chunks"]
-    Chunk --> Dense["Embeddings"] --> Qdrant[("Qdrant")]
-    Chunk --> BM25[("BM25 index")]
-
-    User["Authenticated query"] --> Guard["Input pattern checks"]
-    Guard --> Router["Four-route intent router"]
-    Router -->|"knowledge / hybrid"| Access["Role access filters"]
-    Access --> DenseSearch["Dense retrieval"]
-    Access --> KeywordSearch["BM25 retrieval"]
-    DenseSearch --> RRF["Weighted RRF, k=60"]
-    KeywordSearch --> RRF
-    RRF --> Rank["Cross-encoder reranking"]
-    Rank --> Evidence["Evidence assessment"]
-    Evidence -->|"partial / strong"| Prompt["Untrusted context + citations"]
-    Evidence -->|"insufficient"| Abstain["Abstain"]
-    Prompt --> LLM["Groq or Gemini"]
-    LLM --> Redact["Selected secret redaction"]
-    Redact --> Response["Answer, citations, trace metadata"]
+    D[Markdown / PDF] --> P[Parse and chunk with section context]
+    P --> Q[(Qdrant dense index)]
+    P --> B[(BM25 index)]
+    U[Query + verified JWT] --> I[Input checks and intent routing]
+    I -->|document question| F[Role-filtered retrieval]
+    F --> Q
+    F --> B
+    Q --> R[Weighted RRF]
+    B --> R
+    R --> X[Cross-encoder reranking]
+    X --> E[Evidence assessment]
+    E -->|enough evidence| G[LLM answer with source references]
+    E -->|insufficient evidence| A[Abstain]
 ```
 
-### 🔄 Retrieval and answer flow
+The model receives retrieved passages marked as untrusted context and is instructed to cite them. Citation formatting and factual grounding are not guaranteed by the prompt alone; evaluation and manual review remain important.
 
-1. Documents are parsed and split into lineage-aware chunks; embeddings and BM25 entries are built through the ingestion pipeline.
-2. Requests pass input checks and intent routing. For knowledge queries, the authenticated role is applied to both dense and sparse retrieval.
-3. Dense and lexical candidate ranks are combined using weighted RRF, then reranked with a cross-encoder.
-4. The evidence evaluator checks whether support is strong, partial, or insufficient. The generator receives marked context and citation instructions for supported answers.
-5. The response includes citations, abstention/evidence fields, latency, and optional trace and token-cost metadata.
+## Evaluation results
 
----
+The repository contains 30 development and 30 held-out queries. They were AI-generated from the project corpus, share source documents across splits, and include paraphrases. Treat the scores below as **small, preliminary portfolio evidence**, not as an independent benchmark.
 
-## 🔐 Authentication and authorization
+| Evaluation | Result | How to read it |
+| --- | --- | --- |
+| Document retrieval, hybrid + reranker | Recall@5 **1.00**, MRR **0.856**, nDCG@5 **0.893** | Document-level results on 22 labeled held-out questions; there are no ground-truth chunk IDs, so chunk-level retrieval scores are unavailable. |
+| Abstention, hybrid + reranker + abstention | Precision **0.545**, recall **1.00** | Evaluated on all 30 held-out questions; the low precision means some answerable questions were incorrectly abstained on. |
+| Generation quality | Faithfulness **0.707**, answer relevancy **0.923** | 30 development questions judged by a separate model. One generator call hit a rate limit and used a mock fallback; the results need human review. |
+| Live latency and usage | 30 Langfuse traces; total latency p50 **8.56 s**, p95 **31.73 s** | Complete token usage and estimated cost were available for 19/30 queries: **2,833 tokens/query** and **$0.000338/query on those 19**. The other 11 are unavailable and excluded from those averages. |
 
-Protected endpoints use a signed Bearer JWT. The server assigns the role after credential verification; caller-supplied `user_role` values do not grant access. Access levels are filtered before candidates are returned:
+In the held-out retrieval ablation, adding the cross-encoder to hybrid search kept document Recall@5 at **1.00**, while MRR rose from **0.811 to 0.856** and nDCG@5 from **0.860 to 0.893**. Median latency also increased from about **73 ms to 392 ms** in that run. This illustrates the ranking/latency trade-off the project measures; the small, overlapping dataset limits how broadly to generalize the result.
 
-| Role | Access Scope |
-| :--- | :--- |
-| `PUBLIC_USER` | public documents |
-| `INTERNAL_USER` | public and internal documents |
-| `ADMIN` | public, internal, and restricted documents |
+The live latency run used Groq and Qdrant Cloud, so it required network access and consumed API quota. Cost is an estimate from the configured GPT-OSS 20B rates, not a provider invoice. The high latency tail is a current optimization target. Detailed commands, results, and limitations are in [`evaluation/results.md`](evaluation/results.md); the machine-readable latency run is [`evaluation/results/latency_report_development.json`](evaluation/results/latency_report_development.json).
 
-`POST /api/v1/auth/login` accepts a JSON username/password body and issues a JWT. `/api/v1/auth/token` is an alias using the same JSON schema; it is not the standard OAuth2 form-encoded password flow. `GET /api/v1/auth/me` returns the verified identity.
+## Stack
 
-> [!NOTE]
-> The demo users and passwords are defined in `backend/app/security/users.py`. Replace this store and rotate `JWT_SECRET_KEY` before any non-demo deployment. A missing JWT secret raises an error when token signing/verification is attempted; it is not a general dependency-readiness check.
+Python 3.11 · FastAPI · Streamlit · Qdrant · Sentence Transformers · BM25Okapi · Cross-Encoder · Groq/Gemini clients · JWT · Langfuse · Docker Compose · GitHub Actions
 
----
+## Run locally
 
-## 🛠️ API examples
-
-### 1. Get a demo token
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"public_guest","password":"GuestPass2026!"}'
-```
-
-Use the returned `access_token` as `Authorization: Bearer <token>` for protected endpoints. The credentials above are public demo credentials, not secrets.
-
-### 2. Query
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/query \
-  -H "Authorization: Bearer <JWT_TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"What does the policy say about access?","top_k":5}'
-```
-
-Response fields include `query`, `answer`, `citations` (`source_index`, `document_name`, `section`, `page`, `version`, `access_level`, and `source_url`), `retrieved_chunks_count`, `is_abstained`, `latency_ms`, `evidence_status`, `trace`, `token_usage`, and `estimated_cost_usd`. Optional trace and cost fields may be null/unavailable.
-
-### 3. Other endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/v1/documents/list` | list documents visible to the caller. |
-| `POST` | `/api/v1/documents/upload` | upload Markdown or PDF for indexing. |
-| `DELETE` | `/api/v1/documents/{document_id}` | delete a document (admin role required); BM25 is reindexed from retained chunks. |
-| `GET` | `/api/v1/health` | application metadata and process uptime, not a full dependency health check. |
-
----
-
-## 📊 Tracing, token usage, and cost
-
-Set `LANGFUSE_ENABLED`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and optionally `LANGFUSE_HOST` to enable Langfuse export. `TRACE_REDACT_PAYLOADS=True` is the default; sensitive payload fields are omitted/redacted, but tracing should still be configured and reviewed for the deployment environment.
-
-The tracer records applicable stages: `guardrail`, `router`, `dense_retrieval`, `bm25_retrieval`, `fusion`, `reranking`, and `generation`. A route may skip some stages. Token usage is recorded when the provider client returns it; unavailable usage stays unavailable. Estimated cost uses the rates configured in `backend/app/core/config.py`, not a live provider invoice. As of the repository's current configuration, Groq `openai/gpt-oss-20b` is set to $0.075/M input tokens and $0.30/M output tokens; other listed models have unset rates. Cached-input discounts are not modeled. See [Groq GPT-OSS 20B pricing](https://console.groq.com/docs/model/openai/gpt-oss-20b).
-
-Run the latency report with:
-
-```bash
-python scripts/latency_report.py --split development
-```
-
-> [!CAUTION]
-> This command runs the configured evaluation path and may call the configured LLM/router. It can consume API quota. Offline/mock runs produce latency data but will not have provider usage or cost.
-
----
-
-## 📈 Evaluation and current evidence
-
-The repository includes an AI-generated dataset of 60 queries split into 30 development and 30 held-out-test queries. Both splits share underlying corpus documents and contain related paraphrases. The labels and questions are not independently authored, and the test split is not a representative external benchmark.
-
-* **K-1 (Retrieval & Abstention):** K-1 retrieval ablation uses a local in-memory index and makes no LLM generation calls or Qdrant Cloud writes. The current held-out run reports document-level retrieval metrics for 22/30 cases with a non-null expected document, abstention metrics for all 30 cases, and no chunk-level metric because **none of the questions has ground-truth chunk IDs**. These results are preliminary and the deterministic router/abstention logic was tuned on development data. The current run and per-question judgments are in [`evaluation/results.md`](evaluation/results.md) and [`evaluation/results/eval_run_20261127_183745_held_out_test_k1_no_llm.json`](evaluation/results/eval_run_20261127_183745_held_out_test_k1_no_llm.json). Earlier runs are historical artifacts.
-* **K-2 (Generation Quality):** K-2 generation evaluation scored 30 development questions using a separate Groq judge. The recorded means are faithfulness **0.7067** and answer relevancy **0.9233**. One generator request hit a rate limit and used the offline mock fallback; inspect the per-question CSV and manually review the pending sample before treating these as final quality claims.
-* **K-4 (Live Latency, Tokens & Cost):** The latest live K-4 latency run (2026-11-28) created 30 Langfuse traces. Complete provider usage was available for 19/30 queries: **2,832.58 average tokens/query** and **$0.000338 average estimated cost/query among those 19** using the configured GPT-OSS 20B pricing. Usage and cost were unavailable for 11 queries, so these averages do not cover all 30. Per-stage p50/p95 values and the full run details are in [`evaluation/results.md`](evaluation/results.md) and [`evaluation/results/latency_report_development.json`](evaluation/results/latency_report_development.json). This was a live run against Groq and Qdrant Cloud and may consume API quota.
-
-Run the evaluations (generation evaluation makes provider calls and may consume quota):
-
-```bash
-# Retrieval and abstention ablation; local in-memory index
-python evaluation/run_eval.py --split development --mode all
-
-# Generation quality; calls generator and judge providers
-python evaluation/run_generation_eval.py --split development
-
-# Per-stage latency; may call configured model/router
-python scripts/latency_report.py --split development
-```
-
-Full commands, metrics, limitations, and historical runs are recorded in [`evaluation/results.md`](evaluation/results.md). The 20-case manual review sample is [`evaluation/human_review_sample.json`](evaluation/human_review_sample.json); its labels are pending human annotation.
-
----
-
-## ⚙️ Local development
-
-### 1. Create and activate a virtual environment
+### 1. Install
 
 ```powershell
 git clone https://github.com/omrohitchannoji/knowvia-rag.git
@@ -184,55 +68,53 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-On Linux/macOS, activate with `source venv/bin/activate`.
+On macOS/Linux, activate with `source venv/bin/activate`.
 
-### 2. Configure environment
+### 2. Configure `.env`
 
-Copy `.env.example` to `.env`, then set the values you need. Keep `.env` private and never commit API keys.
+Copy `.env.example` to `.env` and set the LLM, vector-store, and JWT settings you intend to use. Keep real credentials out of Git. Configure Langfuse only if you want remote tracing.
 
-```ini
-APP_NAME=Knowvia AI
-APP_ENV=development
-DEBUG=true
-JWT_SECRET_KEY=replace_with_a_long_random_secret
-JWT_ALGORITHM=HS256
-LLM_PROVIDER=groq
-LLM_MODEL=openai/gpt-oss-20b
-GROQ_API_KEY=your_groq_api_key
-VECTOR_DB_TYPE=qdrant
-QDRANT_STORAGE_PATH=./qdrant_data
-COLLECTION_NAME=tech_doc_collection
-EMBEDDING_PROVIDER=sentence_transformers
-EMBEDDING_MODEL=all-MiniLM-L6-v2
-EMBEDDING_DIMENSION=384
-```
+### 3. Start the API and UI
 
-Configure Langfuse variables only if you want remote traces. Verify `.env` remains ignored by Git before adding any credentials.
+Use two PowerShell terminals. The UI must be pointed at the local API; otherwise it may use the deployed backend URL from its default configuration.
 
-### 3. Run tests and start the app
+**Terminal 1 — API:**
 
-```bash
-pytest -m "not external" -v
-```
-
-```bash
-# Terminal 1: API
+```powershell
+.\venv\Scripts\Activate.ps1
 uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+```
 
-# Terminal 2: Streamlit UI
+If Windows blocks port 8000, use `8765` here and in the UI command below.
+
+**Terminal 2 — Streamlit:**
+
+```powershell
+.\venv\Scripts\Activate.ps1
+$env:API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 streamlit run frontend/app.py
 ```
 
-The API docs are at `http://127.0.0.1:8000/docs` when the backend is running. Local mode can still require model downloads or configured external services depending on the selected settings.
+For port `8765`, set `$env:API_BASE_URL = "http://127.0.0.1:8765/api/v1"` instead. Open the Streamlit URL printed in the terminal. The API docs are at `http://127.0.0.1:8000/docs` (or port `8765`).
 
----
+### Tests and evaluation commands
 
-## ☁️ Deployment overview
+```bash
+pytest -m "not external" -v
+python evaluation/run_eval.py --split development --mode all
+```
 
-The repository has been configured for a Streamlit Community Cloud frontend, an AWS EC2 FastAPI backend, Qdrant Cloud, and Groq. Public endpoint availability and security posture can change; check the deployment before relying on it. The published backend URL uses HTTP, so it is not appropriate for transmitting secrets or private document content.
+Generation and latency evaluation may call configured LLMs and consume API quota:
 
----
+```bash
+python evaluation/run_generation_eval.py --split development
+python scripts/latency_report.py --split development
+```
 
-## 📜 License
+## Authentication notes
 
-This project is licensed under the **MIT License**. See [`LICENSE`](LICENSE).
+Protected API endpoints require a Bearer JWT. Roles are assigned after demo credential verification and used for pre-retrieval access filters. The included user store is hard-coded for demonstration; replace it with a managed identity provider and rotate the JWT secret before any non-demo deployment. `/api/v1/auth/token` accepts the same JSON schema as `/api/v1/auth/login`; despite its name, it is not the standard OAuth2 form-encoded password flow.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
