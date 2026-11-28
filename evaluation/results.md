@@ -150,19 +150,31 @@ In the legacy 10-query benchmark, `Dense Only` produced identical `Recall@5 = 0.
 ```bash
 .\venv\Scripts\python.exe scripts/latency_report.py --split development
 ```
-* **Langfuse Mode**: `offline_mock` (`LANGFUSE_ENABLED=False`).
-* **Per-Stage Latency (30 dev queries, 26 retrieval queries)**:
-  * `guardrail`: p50 = 0.03 ms, p95 = 0.05 ms
-  * `router`: p50 = 33.64 ms, p95 = 83.91 ms
-  * `dense_retrieval`: p50 = 564.40 ms, p95 = 1275.54 ms
-  * `bm25_retrieval`: p50 = 41.04 ms, p95 = 52.86 ms
-  * `fusion` (RRF): p50 = 0.43 ms, p95 = 0.69 ms
-  * `reranking`: p50 = 1709.10 ms, p95 = 1824.76 ms
-  * `generation`: p50 = 32.93 ms, p95 = 42.97 ms
-  * `total`: p50 = 2397.96 ms, p95 = 3044.89 ms
-* **Tokens/Query**: `unavailable` (0/30 queries had provider token usage in offline mock mode).
-* **Estimated Cost/Query**: `unavailable` (`MODEL_PRICING` rates are unset `None` by default and provider token usage is unavailable).
-* **Artifact**: `evaluation/results/latency_report_development.json`
+### Latest live development run (2026-11-28)
+
+* **Mode and traces**: `live`; 30/30 queries created Langfuse traces. The run used Groq and connected to Qdrant Cloud, so it required network access and consumed provider quota.
+* **Per-stage latency** (30 development queries; 25 executed retrieval):
+
+| Stage | Samples | p50 (ms) | p95 (ms) |
+| :--- | ---: | ---: | ---: |
+| Guardrail | 30 | 0.05 | 0.12 |
+| Router | 30 | 710.12 | 8,637.95 |
+| Dense retrieval | 25 | 1,056.37 | 1,796.15 |
+| BM25 retrieval | 25 | 21.75 | 47.23 |
+| Fusion (RRF) | 25 | 0.44 | 0.73 |
+| Reranking | 25 | 1,702.94 | 1,893.21 |
+| Generation | 27 | 1,548.21 | 23,145.43 |
+| Total | 30 | 8,563.89 | 31,729.97 |
+
+* **Provider usage**: Complete token usage was available for 19/30 queries. Their average was **2,832.58 tokens/query**. Usage was unavailable for the other 11 queries, so those are excluded from this average.
+* **Estimated cost**: Available for 19/30 queries; mean **$0.000338 per query with usage**. This is calculated from the configured `openai/gpt-oss-20b` pricing constants, not a provider invoice. The 11 queries without usage are excluded; this is not a complete 30-query cost average.
+* **Artifact**: [`evaluation/results/latency_report_development.json`](evaluation/results/latency_report_development.json)
+
+The report intentionally marks provider usage and cost unavailable when the provider does not return usage. This live run demonstrates stage-level latency, Langfuse export, and usage/cost reporting for the 19 queries with complete provider usage; it does not provide token or cost measurements for all 30 queries.
+
+### Earlier offline/mock run (historical)
+
+An earlier development run used `offline_mock` and therefore had no provider token usage or cost. Its reported p50/p95 and unavailable usage values were superseded by the live run above; they are not the current report.
 
 ### Langfuse Cloud Connectivity Smoke Test (2026-11-27)
 * **Authentication**: Langfuse SDK `auth_check()` succeeded against the configured EU Cloud host.

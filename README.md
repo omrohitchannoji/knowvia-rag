@@ -126,6 +126,8 @@ K-1 retrieval ablation uses a local in-memory index and makes no LLM generation 
 
 K-2 generation evaluation scored 30 development questions using a separate Groq judge. The recorded means are faithfulness **0.7067** and answer relevancy **0.9233**. One generator request hit a rate limit and used the offline mock fallback; inspect the per-question CSV and manually review the pending sample before treating these as final quality claims.
 
+The latest live K-4 latency run (2026-11-28) created 30 Langfuse traces. Complete provider usage was available for 19/30 queries: **2,832.58 average tokens/query** and **$0.000338 average estimated cost/query among those 19** using the configured GPT-OSS 20B pricing. Usage and cost were unavailable for 11 queries, so these averages do not cover all 30. Per-stage p50/p95 values and the full run details are in [`evaluation/results.md`](evaluation/results.md) and [`evaluation/results/latency_report_development.json`](evaluation/results/latency_report_development.json). This was a live run against Groq and Qdrant Cloud and may consume API quota.
+
 Run the evaluations (generation evaluation makes provider calls and may consume quota):
 
 ```bash
